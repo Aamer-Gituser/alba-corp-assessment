@@ -4,7 +4,7 @@ Three tasks, one repo.
 
 | Task | Name | Live URL | Folder | Build log | Video |
 |---|---|---|---|---|---|
-| 01 | Apogee — NASA APOD archive | _pending_ | [`/01-web-app`](./01-web-app) | [BUILD_LOG](./01-web-app/BUILD_LOG.md) | _pending_ |
+| 01 | Apogee — NASA APOD archive | [alba-corp-assessment-orcin.vercel.app](https://alba-corp-assessment-orcin.vercel.app) | [`/01-web-app`](./01-web-app) | [BUILD_LOG](./01-web-app/BUILD_LOG.md) | _pending_ |
 | 02 | Forecourt — Dealership dashboard | _pending_ | [`/02-dashboard`](./02-dashboard) | _pending_ | _pending_ |
 | 03 | Forecourt Signal — n8n digest | _pending_ | [`/03-n8n-workflow`](./03-n8n-workflow) | _pending_ | _pending_ |
 
