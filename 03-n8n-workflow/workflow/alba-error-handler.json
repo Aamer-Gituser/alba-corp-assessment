@@ -1,0 +1,79 @@
+{
+  "name": "Alba Market Pulse — Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "error-trigger",
+      "name": "On Workflow Error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        260,
+        300
+      ],
+      "notes": "Set this workflow as the Error Workflow of the main one (Settings → Error workflow)."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Runs in the separate error-handler workflow, triggered by n8n when the main workflow\n// throws anything the in-flow branches did not already catch.\nconst context = $input.first().json;\nconst workflow = context.workflow || {};\nconst execution = context.execution || {};\nconst error = execution.error || context.error || {};\n\nconst escapeHtml = (value) =>\n  String(value ?? '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n\nconst failedNode = error.node?.name || execution.lastNodeExecuted || 'unknown node';\nconst message = error.message || 'No error message supplied by n8n.';\nconst when = new Date().toISOString();\n\nconst html = `<!doctype html>\n<html><body style=\"margin:0;padding:24px 12px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;\">\n  <div style=\"max-width:600px;margin:0 auto;background:#ffffff;border-radius:14px;padding:26px;border-top:4px solid #dc2626;\">\n    <div style=\"font-size:19px;font-weight:700;color:#0f172a;\">Alba Market Pulse — run failed</div>\n    <div style=\"margin-top:4px;font-size:13px;color:#64748b;\">${escapeHtml(when)}</div>\n    <table style=\"margin-top:18px;width:100%;border-collapse:collapse;font-size:14px;color:#334155;\">\n      <tr><td style=\"padding:6px 0;color:#64748b;width:130px;\">Workflow</td><td>${escapeHtml(workflow.name || 'Alba Market Pulse')}</td></tr>\n      <tr><td style=\"padding:6px 0;color:#64748b;\">Failed at node</td><td><strong>${escapeHtml(failedNode)}</strong></td></tr>\n      <tr><td style=\"padding:6px 0;color:#64748b;\">Execution</td><td>${escapeHtml(execution.id || 'n/a')}</td></tr>\n      <tr><td style=\"padding:6px 0;color:#64748b;vertical-align:top;\">Message</td><td style=\"color:#b91c1c;\">${escapeHtml(message)}</td></tr>\n    </table>\n    ${\n      execution.url\n        ? `<a href=\"${escapeHtml(execution.url)}\" style=\"display:inline-block;margin-top:18px;padding:10px 16px;background:#0f172a;color:#f8fafc;border-radius:8px;text-decoration:none;font-size:13px;\">Open the failed execution</a>`\n        : ''\n    }\n    <div style=\"margin-top:18px;font-size:12px;color:#94a3b8;line-height:1.6;\">\n      Feed-level failures are handled inside the workflow and do not reach this alert.\n      This email means something outside that path broke — credentials, the LLM call, or the delivery step.\n    </div>\n  </div>\n</body></html>`;\n\nreturn [\n  {\n    json: {\n      subject: `[ALERT] Alba Market Pulse failed at \"${failedNode}\"`,\n      html,\n      failedNode,\n      message,\n      executionUrl: execution.url || '',\n      failedAt: when,\n    },\n  },\n];\n"
+      },
+      "id": "format-error-alert",
+      "name": "Format Error Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "REPLACE_WITH_YOUR_EMAIL@example.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "send-alert",
+      "name": "Send Failure Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        700,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "On Workflow Error": {
+      "main": [
+        [
+          {
+            "node": "Format Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Error Alert": {
+      "main": [
+        [
+          {
+            "node": "Send Failure Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

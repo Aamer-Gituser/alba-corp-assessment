@@ -1,0 +1,629 @@
+{
+  "name": "Alba Market Pulse — Daily UAE Auto Digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Daily 07:00 GST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -220,
+        260
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Run Manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"digestRecipient\": \"REPLACE_WITH_YOUR_EMAIL@example.com\",\n  \"historySheetId\": \"REPLACE_WITH_GOOGLE_SHEET_ID\",\n  \"historySheetTab\": \"Digest History\",\n  \"lookbackHours\": 36,\n  \"maxItems\": 8,\n  \"minScore\": 3,\n  \"geminiModel\": \"gemini-1.5-flash\",\n  \"brandName\": \"Alba Market Pulse\",\n  \"keywords\": [\n    { \"term\": \"used car\", \"weight\": 4 },\n    { \"term\": \"pre-owned\", \"weight\": 4 },\n    { \"term\": \"car price\", \"weight\": 4 },\n    { \"term\": \"resale value\", \"weight\": 4 },\n    { \"term\": \"car dealership\", \"weight\": 3 },\n    { \"term\": \"auto market\", \"weight\": 3 },\n    { \"term\": \"car sales\", \"weight\": 3 },\n    { \"term\": \"electric vehicle\", \"weight\": 2 },\n    { \"term\": \"ev\", \"weight\": 2 },\n    { \"term\": \"uae\", \"weight\": 3 },\n    { \"term\": \"dubai\", \"weight\": 3 },\n    { \"term\": \"abu dhabi\", \"weight\": 2 },\n    { \"term\": \"gcc\", \"weight\": 2 },\n    { \"term\": \"import\", \"weight\": 2 },\n    { \"term\": \"tariff\", \"weight\": 2 },\n    { \"term\": \"finance\", \"weight\": 1 },\n    { \"term\": \"insurance\", \"weight\": 1 },\n    { \"term\": \"recall\", \"weight\": 2 }\n  ],\n  \"sources\": [\n    {\n      \"id\": \"gnews-uae-used-cars\",\n      \"name\": \"Google News — UAE used-car market\",\n      \"url\": \"https://news.google.com/rss/search?q=%22used+cars%22+OR+%22pre-owned+cars%22+(UAE+OR+Dubai+OR+%22Abu+Dhabi%22)&hl=en-US&gl=US&ceid=US:en\",\n      \"weight\": 3\n    },\n    {\n      \"id\": \"gnews-uae-auto-market\",\n      \"name\": \"Google News — UAE auto & mobility\",\n      \"url\": \"https://news.google.com/rss/search?q=(UAE+OR+Dubai)+(%22car+market%22+OR+%22electric+vehicle%22+OR+%22auto+sales%22)&hl=en-US&gl=US&ceid=US:en\",\n      \"weight\": 2\n    },\n    {\n      \"id\": \"carscoops-global\",\n      \"name\": \"Carscoops — global auto industry\",\n      \"url\": \"https://www.carscoops.com/feed/\",\n      \"weight\": 1\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "id": "config",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        20,
+        360
+      ],
+      "notes": "Single source of truth: feeds, keyword weights, thresholds, recipient, model. Tune the digest here, never in code."
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $json.historySheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $json.historySheetTab }}",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "load-seen-hashes",
+      "name": "Load Seen Hashes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        360
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "notes": "Idempotency layer 2. alwaysOutputData keeps the run alive when the sheet is empty; onError keeps it alive when the sheet is not configured at all."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Fan out: emit one n8n item per configured feed.\n// Why: the HTTP node then runs once per source, so a single dead feed fails only its\n// own item and drops into the error branch instead of killing the whole execution.\nconst config = $('Config').first().json;\nconst sources = Array.isArray(config.sources) ? config.sources : [];\n\nif (sources.length === 0) {\n  throw new Error('Config.sources is empty. Add at least one RSS source before running.');\n}\n\nreturn sources.map((source) => ({\n  json: {\n    sourceId: source.id,\n    sourceName: source.name,\n    sourceUrl: source.url,\n    sourceWeight: Number(source.weight) || 1,\n  },\n}));\n"
+      },
+      "id": "build-source-list",
+      "name": "Build Source List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.sourceUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (compatible; AlbaMarketPulse/1.0; +https://n8n.io)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "id": "fetch-feed",
+      "name": "Fetch Feed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        360
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput",
+      "notes": "Runs once per source. 3 tries with 2s backoff for flaky feeds; anything still failing leaves on the second output instead of killing the run."
+    },
+    {
+      "parameters": {
+        "dataPropertyName": "data",
+        "options": {}
+      },
+      "id": "parse-rss",
+      "name": "Parse RSS",
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        900,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "source-name",
+              "name": "sourceName",
+              "value": "={{ $('Build Source List').item.json.sourceName }}",
+              "type": "string"
+            },
+            {
+              "id": "source-weight",
+              "name": "sourceWeight",
+              "value": "={{ $('Build Source List').item.json.sourceWeight }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "attach-source-meta",
+      "name": "Attach Source Meta",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        240
+      ],
+      "notes": "The XML node replaces the item with the parsed tree, dropping which feed it came from. This re-attaches it via paired-item lookup."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Flatten wildly inconsistent RSS into one predictable article shape.\n//\n// Real-world problems this handles:\n//   - <item> is an object when a feed has exactly one entry, an array otherwise\n//   - titles/descriptions arrive CDATA-wrapped, HTML-escaped, or full of markup\n//   - <link> is a string in RSS 2.0 but an array of objects in Atom\n//   - dates come as RFC-822, ISO-8601, or dc:date\n//   - the same story appears in two feeds with different tracking parameters\nconst config = $('Config').first().json;\nconst lookbackMs = (Number(config.lookbackHours) || 36) * 60 * 60 * 1000;\nconst cutoff = Date.now() - lookbackMs;\n\nconst asArray = (value) => (value == null ? [] : Array.isArray(value) ? value : [value]);\n\nconst text = (value) => {\n  if (value == null) return '';\n  // XML→JSON can hand back a string, { _: 'text' }, or { '#text': 'text' }.\n  const raw = typeof value === 'object' ? (value._ ?? value['#text'] ?? '') : value;\n  return String(raw)\n    .replace(/<[^>]*>/g, ' ')\n    .replace(/&nbsp;/gi, ' ')\n    .replace(/&amp;/gi, '&')\n    .replace(/&quot;/gi, '\"')\n    .replace(/&#39;|&apos;/gi, \"'\")\n    .replace(/&lt;/gi, '<')\n    .replace(/&gt;/gi, '>')\n    .replace(/\\s+/g, ' ')\n    .trim();\n};\n\nconst linkOf = (item) => {\n  if (typeof item.link === 'string') return item.link;\n  const links = asArray(item.link);\n  const withHref = links.find((link) => link?.$?.href);\n  return withHref?.$?.href ?? text(links[0]) ?? '';\n};\n\n// Strip tracking params so the same article arriving from two feeds hashes identically.\nconst canonicalUrl = (url) => {\n  try {\n    const parsed = new URL(String(url));\n    [...parsed.searchParams.keys()]\n      .filter((key) => /^(utm_|fbclid|gclid|ref$|oc$)/i.test(key))\n      .forEach((key) => parsed.searchParams.delete(key));\n    parsed.hash = '';\n    return parsed.toString();\n  } catch {\n    return String(url || '').trim();\n  }\n};\n\n// djb2 — small, dependency-free, stable across runs. This is the idempotency key.\nconst hash = (value) => {\n  let h = 5381;\n  for (let i = 0; i < value.length; i += 1) h = ((h << 5) + h + value.charCodeAt(i)) | 0;\n  return 'a' + (h >>> 0).toString(36);\n};\n\nconst articles = [];\n\nfor (const entry of $input.all()) {\n  const data = entry.json;\n  const sourceName = data.sourceName || 'Unknown source';\n  const sourceWeight = Number(data.sourceWeight) || 1;\n\n  const channel = data?.rss?.channel ?? data?.channel ?? null;\n  const rawItems = channel ? asArray(channel.item) : asArray(data?.feed?.entry);\n\n  for (const item of rawItems) {\n    const title = text(item.title);\n    const url = canonicalUrl(linkOf(item));\n    if (!title || !url) continue;\n\n    const publishedRaw = item.pubDate ?? item.published ?? item.updated ?? item['dc:date'];\n    const parsedDate = new Date(text(publishedRaw));\n    const publishedMs = Number.isNaN(parsedDate.getTime()) ? Date.now() : parsedDate.getTime();\n\n    // Time window keeps the digest about *today* and caps how much text reaches the LLM.\n    if (publishedMs < cutoff) continue;\n\n    articles.push({\n      json: {\n        hash: hash(url.toLowerCase()),\n        title,\n        url,\n        summarySource: text(\n          item.description ?? item.summary ?? item['content:encoded'] ?? '',\n        ).slice(0, 600),\n        publishedAt: new Date(publishedMs).toISOString(),\n        sourceName,\n        sourceWeight,\n      },\n    });\n  }\n}\n\nreturn articles;\n"
+      },
+      "id": "normalize-window",
+      "name": "Normalize & Window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Reached only through the HTTP node's error output (onError: continueErrorOutput).\n// The run stays alive, and the failure travels downstream as data so the digest can\n// honestly say \"2 of 3 sources responded\" instead of silently reporting less news.\nreturn $input.all().map((item) => ({\n  json: {\n    __degradedSource: true,\n    sourceName: item.json.sourceName || 'Unknown source',\n    sourceUrl: item.json.sourceUrl || '',\n    reason:\n      item.json.error?.message ||\n      item.json.error?.description ||\n      item.json.message ||\n      'Feed request failed after retries',\n    failedAt: new Date().toISOString(),\n  },\n}));\n"
+      },
+      "id": "note-failed-source",
+      "name": "Note Failed Source",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// The decision layer: collapse duplicates, drop anything already sent, score what is\n// left against the business keyword list, and keep only the top N.\nconst config = $('Config').first().json;\nconst minScore = Number(config.minScore) || 1;\nconst maxItems = Number(config.maxItems) || 8;\nconst keywords = Array.isArray(config.keywords) ? config.keywords : [];\n\nconst incoming = $input.all().map((item) => item.json);\nconst degraded = incoming.filter((row) => row.__degradedSource);\nconst candidates = incoming.filter((row) => !row.__degradedSource);\n\n// --- Idempotency, two layers ------------------------------------------------------\n// Layer 1: workflow static data. Fast and dependency-free, but n8n only persists it on\n// production (scheduled) executions — never on manual ones.\nconst store = $getWorkflowStaticData('global');\nif (!Array.isArray(store.seenHashes)) store.seenHashes = [];\nconst seen = new Set(store.seenHashes.map(String));\n\n// Layer 2: the Google Sheet history. Survives manual runs and is human-auditable, which\n// is what actually makes it safe for a reviewer to hit Execute twice in a row.\ntry {\n  for (const row of $('Load Seen Hashes').all()) {\n    if (row.json?.hash) seen.add(String(row.json.hash));\n  }\n} catch {\n  // Sheet not configured yet — static data alone still prevents same-run duplicates.\n}\n\nconst scoreOf = (article) => {\n  const title = String(article.title || '').toLowerCase();\n  const body = String(article.summarySource || '').toLowerCase();\n  let score = 0;\n  const matched = [];\n\n  for (const keyword of keywords) {\n    const term = String(keyword.term || '').toLowerCase();\n    if (!term) continue;\n    const weight = Number(keyword.weight) || 1;\n    // A keyword in the headline is worth far more than one buried in the blurb.\n    if (title.includes(term)) {\n      score += weight * 3;\n      matched.push(keyword.term);\n    } else if (body.includes(term)) {\n      score += weight;\n      matched.push(keyword.term);\n    }\n  }\n\n  return { score: score * (Number(article.sourceWeight) || 1), matched: [...new Set(matched)] };\n};\n\nconst byHash = new Map();\nlet duplicatesCollapsed = 0;\nlet alreadySent = 0;\nlet belowThreshold = 0;\n\nfor (const article of candidates) {\n  if (seen.has(article.hash)) {\n    alreadySent += 1;\n    continue;\n  }\n  if (byHash.has(article.hash)) {\n    duplicatesCollapsed += 1;\n    continue;\n  }\n\n  const { score, matched } = scoreOf(article);\n  if (score < minScore) {\n    belowThreshold += 1;\n    continue;\n  }\n\n  byHash.set(article.hash, { ...article, score, matchedKeywords: matched });\n}\n\nconst ranked = [...byHash.values()]\n  .sort(\n    (a, b) =>\n      b.score - a.score || new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),\n  )\n  .slice(0, maxItems);\n\nreturn [\n  {\n    json: {\n      hasNews: ranked.length > 0,\n      articles: ranked,\n      stats: {\n        fetched: candidates.length,\n        selected: ranked.length,\n        duplicatesCollapsed,\n        alreadySent,\n        belowThreshold,\n        sourcesOk: new Set(candidates.map((article) => article.sourceName)).size,\n        sourcesFailed: degraded.map((row) => ({ sourceName: row.sourceName, reason: row.reason })),\n        generatedAt: new Date().toISOString(),\n      },\n    },\n  },\n];\n"
+      },
+      "id": "dedupe-score-rank",
+      "name": "Dedupe, Score & Rank",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has-news",
+              "leftValue": "={{ $json.hasNews }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "has-news",
+      "name": "Any New Relevant News?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1780,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Build the Gemini request body here rather than inline in the HTTP node, so the prompt\n// is reviewable in git and the HTTP node stays a dumb transport.\nconst config = $('Config').first().json;\nconst { articles, stats } = $input.first().json;\n\n// Only the fields the model needs. Sending less keeps us inside the free-tier token\n// budget and stops the model from inventing detail it was never given.\nconst payload = articles.map((article) => ({\n  id: article.hash,\n  title: article.title,\n  source: article.sourceName,\n  blurb: String(article.summarySource || '').slice(0, 400),\n}));\n\nconst instruction = [\n  'You are a market analyst for Alba Cars, a used-car dealership and marketplace in Dubai, UAE.',\n  'You will receive a JSON array of news articles.',\n  '',\n  'For EVERY article, return:',\n  '  - id: copy the id exactly as given',\n  '  - summary: one sentence, max 25 words, plain factual language, no hype',\n  '  - category: exactly one of \"Pricing\", \"Supply\", \"Regulation\", \"EV\", \"Industry\", \"Other\"',\n  '  - relevance: max 12 words on why a used-car dealer in the UAE should care',\n  '',\n  'Also return marketTakeaway: one sentence, max 30 words, summarising the day overall.',\n  '',\n  'Rules: use only facts present in the supplied text. If an article gives you too little',\n  'to work with, say so plainly in the summary rather than guessing.',\n  '',\n  'Respond with JSON matching this shape exactly:',\n  '{\"marketTakeaway\":\"...\",\"items\":[{\"id\":\"...\",\"summary\":\"...\",\"category\":\"...\",\"relevance\":\"...\"}]}',\n  '',\n  `Articles (${payload.length} total, ${stats.sourcesOk} sources):`,\n  JSON.stringify(payload),\n].join('\\n');\n\nreturn [\n  {\n    json: {\n      geminiModel: config.geminiModel || 'gemini-2.0-flash',\n      geminiBody: {\n        contents: [{ role: 'user', parts: [{ text: instruction }] }],\n        generationConfig: {\n          temperature: 0.2,\n          maxOutputTokens: 2048,\n          // Forcing a JSON mime type is the difference between parsing a response and\n          // regexing prose out of a markdown code fence.\n          responseMimeType: 'application/json',\n        },\n      },\n    },\n  },\n];\n"
+      },
+      "id": "compose-llm-prompt",
+      "name": "Compose LLM Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/{{ $json.geminiModel }}:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.geminiBody) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "summarise-gemini",
+      "name": "Summarise with Gemini",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2220,
+        240
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "notes": "Header-auth credential keeps the key out of the workflow JSON. onError continues so a rate-limited LLM downgrades the digest instead of cancelling it."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Assemble the deliverable: subject line, HTML body, and the rows we will log.\n//\n// The LLM is an enhancement, never a dependency. If Gemini is rate-limited, errors, or\n// returns something unparseable, this node falls back to an extractive summary taken\n// from the feed text and the digest still goes out — just marked as unenriched.\nconst config = $('Config').first().json;\nconst ranked = $('Dedupe, Score & Rank').first().json;\nconst articles = ranked.articles || [];\nconst stats = ranked.stats || {};\n\nlet aiById = {};\nlet marketTakeaway = '';\nlet aiStatus = 'fallback';\n\ntry {\n  const parts = $json?.candidates?.[0]?.content?.parts ?? [];\n  const raw = parts\n    .map((part) => part.text || '')\n    .join('')\n    .trim();\n  const cleaned = raw\n    .replace(/^```(?:json)?/i, '')\n    .replace(/```$/, '')\n    .trim();\n  const parsed = JSON.parse(cleaned);\n\n  marketTakeaway = String(parsed.marketTakeaway || '').trim();\n  for (const item of parsed.items || []) {\n    if (!item?.id) continue;\n    aiById[item.id] = {\n      summary: String(item.summary || '').trim(),\n      category: String(item.category || '').trim(),\n      relevance: String(item.relevance || '').trim(),\n    };\n  }\n  aiStatus = Object.keys(aiById).length > 0 ? 'ok' : 'empty';\n} catch {\n  aiStatus = 'fallback';\n}\n\nconst firstSentence = (value) => {\n  const sentence = String(value || '').split(/(?<=[.!?])\\s/)[0] || '';\n  return sentence.length > 220 ? `${sentence.slice(0, 217)}…` : sentence;\n};\n\nconst escapeHtml = (value) =>\n  String(value || '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;');\n\nconst enriched = articles.map((article) => {\n  const ai = aiById[article.hash];\n  return {\n    ...article,\n    summary:\n      ai?.summary || firstSentence(article.summarySource) || 'No summary text in the source feed.',\n    category: ai?.category || 'Industry',\n    relevance: ai?.relevance || '',\n    aiEnriched: Boolean(ai),\n  };\n});\n\nconst categoryColour = {\n  Pricing: '#b45309',\n  Supply: '#0369a1',\n  Regulation: '#7c3aed',\n  EV: '#047857',\n  Industry: '#475569',\n  Other: '#475569',\n};\n\nconst dateLabel = new Date().toLocaleDateString('en-AE', {\n  weekday: 'long',\n  day: 'numeric',\n  month: 'long',\n  year: 'numeric',\n  timeZone: 'Asia/Dubai',\n});\n\nconst cards = enriched\n  .map((article) => {\n    const colour = categoryColour[article.category] || '#475569';\n    const published = new Date(article.publishedAt).toLocaleString('en-AE', {\n      day: 'numeric',\n      month: 'short',\n      hour: '2-digit',\n      minute: '2-digit',\n      timeZone: 'Asia/Dubai',\n    });\n    const relevanceLine = article.relevance\n      ? `<div style=\"margin-top:10px;padding-left:10px;border-left:2px solid ${colour};color:#475569;font-size:13px;\">\n           <strong style=\"color:${colour};\">Why it matters:</strong> ${escapeHtml(article.relevance)}\n         </div>`\n      : '';\n\n    return `\n      <div style=\"padding:18px 0;border-bottom:1px solid #e2e8f0;\">\n        <div style=\"font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:${colour};font-weight:700;\">\n          ${escapeHtml(article.category)}\n          <span style=\"color:#94a3b8;font-weight:500;\"> · ${escapeHtml(article.sourceName)} · ${published}</span>\n        </div>\n        <a href=\"${escapeHtml(article.url)}\" style=\"display:block;margin-top:6px;font-size:17px;line-height:1.35;color:#0f172a;font-weight:600;text-decoration:none;\">\n          ${escapeHtml(article.title)}\n        </a>\n        <div style=\"margin-top:8px;font-size:14px;line-height:1.55;color:#334155;\">\n          ${escapeHtml(article.summary)}\n        </div>\n        ${relevanceLine}\n        <div style=\"margin-top:10px;font-size:11px;color:#94a3b8;\">\n          relevance score ${article.score} · matched: ${escapeHtml((article.matchedKeywords || []).join(', ') || 'none')}\n        </div>\n      </div>`;\n  })\n  .join('');\n\nconst degradedBanner = (stats.sourcesFailed || []).length\n  ? `<div style=\"margin:0 0 18px;padding:12px 14px;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;font-size:13px;color:#92400e;\">\n       <strong>Partial run.</strong> ${stats.sourcesFailed.length} source(s) did not respond:\n       ${escapeHtml(stats.sourcesFailed.map((source) => source.sourceName).join(', '))}.\n       The digest below is built from the sources that did.\n     </div>`\n  : '';\n\nconst takeawayBlock = marketTakeaway\n  ? `<div style=\"margin:0 0 20px;padding:16px 18px;background:#0f172a;border-radius:10px;color:#f8fafc;font-size:15px;line-height:1.5;\">\n       <div style=\"font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;margin-bottom:6px;\">Today's takeaway</div>\n       ${escapeHtml(marketTakeaway)}\n     </div>`\n  : '';\n\nconst html = `<!doctype html>\n<html><body style=\"margin:0;padding:24px 12px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;\">\n  <div style=\"max-width:640px;margin:0 auto;background:#ffffff;border-radius:14px;padding:28px 26px;box-shadow:0 1px 3px rgba(15,23,42,.08);\">\n    <div style=\"padding-bottom:18px;border-bottom:2px solid #0f172a;\">\n      <div style=\"font-size:21px;font-weight:700;color:#0f172a;letter-spacing:-.02em;\">${escapeHtml(config.brandName || 'Alba Market Pulse')}</div>\n      <div style=\"margin-top:4px;font-size:13px;color:#64748b;\">UAE automotive market intelligence · ${dateLabel}</div>\n    </div>\n    <div style=\"padding-top:20px;\">\n      ${degradedBanner}\n      ${takeawayBlock}\n      ${cards}\n    </div>\n    <div style=\"margin-top:22px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;line-height:1.7;\">\n      ${stats.fetched} articles scanned · ${stats.selected} selected · ${stats.duplicatesCollapsed} duplicates collapsed ·\n      ${stats.alreadySent} already sent previously · ${stats.belowThreshold} below relevance threshold<br>\n      summaries: ${aiStatus === 'ok' ? 'Gemini' : 'extractive fallback (LLM unavailable)'} ·\n      generated by n8n at ${new Date(stats.generatedAt || Date.now()).toISOString()}\n    </div>\n  </div>\n</body></html>`;\n\nreturn [\n  {\n    json: {\n      subject: `${config.brandName || 'Alba Market Pulse'} — ${enriched.length} stories · ${dateLabel}`,\n      html,\n      aiStatus,\n      marketTakeaway,\n      articles: enriched,\n      stats,\n    },\n  },\n];\n"
+      },
+      "id": "build-digest-email",
+      "name": "Build Digest Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Config').first().json.digestRecipient }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "send-digest",
+      "name": "Send Digest",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2660,
+        240
+      ],
+      "notes": "The deliverable. HTML digest to the address set in Config."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// The digest is one item (one email). The history log needs one row per article, so\n// fan back out here. Runs after the email is sent: nothing is recorded as \"delivered\"\n// until it actually was.\nconst digest = $('Build Digest Email').first().json;\n\nreturn (digest.articles || []).map((article) => ({\n  json: {\n    hash: article.hash,\n    sentAt: new Date().toISOString(),\n    title: article.title,\n    url: article.url,\n    source: article.sourceName,\n    category: article.category,\n    score: article.score,\n    summary: article.summary,\n    aiEnriched: article.aiEnriched ? 'yes' : 'no',\n  },\n}));\n"
+      },
+      "id": "expand-history-rows",
+      "name": "Expand History Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Config').first().json.historySheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Config').first().json.historySheetTab }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "append-history",
+      "name": "Append History",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3100,
+        240
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Human-auditable delivery log, and the persistent half of the idempotency story. Non-fatal: the email already went out."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Commit the idempotency ledger LAST, after the email is out and the history row is\n// written. Ordering matters: if delivery fails, these hashes stay unseen and the next\n// run retries them instead of silently swallowing a day of news.\nconst digest = $('Build Digest Email').first().json;\nconst store = $getWorkflowStaticData('global');\n\nif (!Array.isArray(store.seenHashes)) store.seenHashes = [];\n\nconst fresh = (digest.articles || []).map((article) => article.hash);\nconst merged = [...store.seenHashes, ...fresh];\n\n// Keep the ledger bounded — a rolling window is enough to stop repeats, and it stops\n// static data growing without limit across months of daily runs.\nstore.seenHashes = [...new Set(merged)].slice(-500);\nstore.lastRunAt = new Date().toISOString();\nstore.lastRunCount = fresh.length;\n\nreturn [\n  {\n    json: {\n      committed: fresh.length,\n      ledgerSize: store.seenHashes.length,\n      lastRunAt: store.lastRunAt,\n      note: 'Static data persists on production (scheduled) executions only — the Google Sheet layer covers manual runs.',\n    },\n  },\n];\n"
+      },
+      "id": "commit-seen-ledger",
+      "name": "Commit Seen Ledger",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3320,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Config').first().json.digestRecipient }}",
+        "subject": "=Alba Market Pulse — nothing new worth sending ({{ new Date().toLocaleDateString('en-AE') }})",
+        "emailType": "html",
+        "message": "=<div style=\"font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#334155;\"><h2 style=\"color:#0f172a;margin:0 0 8px;font-size:18px;\">Nothing cleared the bar today</h2><p style=\"font-size:14px;line-height:1.6;\">Scanned <strong>{{ $json.stats.fetched }}</strong> articles from <strong>{{ $json.stats.sourcesOk }}</strong> source(s) over the last {{ $('Config').first().json.lookbackHours }} hours.</p><ul style=\"font-size:13px;line-height:1.8;color:#475569;\"><li>{{ $json.stats.alreadySent }} already sent in a previous digest</li><li>{{ $json.stats.duplicatesCollapsed }} duplicates collapsed</li><li>{{ $json.stats.belowThreshold }} below the relevance threshold</li><li>{{ $json.stats.sourcesFailed.length }} source(s) failed to respond</li></ul><p style=\"font-size:12px;color:#94a3b8;\">A quiet day is a result, not a failure — this note proves the run happened.</p></div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "send-quiet-note",
+      "name": "Send Quiet Note",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2000,
+        520
+      ],
+      "notes": "Deliberate empty state. Silence would be indistinguishable from a broken schedule, so a no-news day still reports itself."
+    }
+  ],
+  "connections": {
+    "Daily 07:00 GST": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Manually": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Load Seen Hashes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Seen Hashes": {
+      "main": [
+        [
+          {
+            "node": "Build Source List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Source List": {
+      "main": [
+        [
+          {
+            "node": "Fetch Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Feed": {
+      "main": [
+        [
+          {
+            "node": "Parse RSS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Note Failed Source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse RSS": {
+      "main": [
+        [
+          {
+            "node": "Attach Source Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach Source Meta": {
+      "main": [
+        [
+          {
+            "node": "Normalize & Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize & Window": {
+      "main": [
+        [
+          {
+            "node": "Dedupe, Score & Rank",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Note Failed Source": {
+      "main": [
+        [
+          {
+            "node": "Dedupe, Score & Rank",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedupe, Score & Rank": {
+      "main": [
+        [
+          {
+            "node": "Any New Relevant News?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any New Relevant News?": {
+      "main": [
+        [
+          {
+            "node": "Compose LLM Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Quiet Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose LLM Prompt": {
+      "main": [
+        [
+          {
+            "node": "Summarise with Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarise with Gemini": {
+      "main": [
+        [
+          {
+            "node": "Build Digest Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Digest Email": {
+      "main": [
+        [
+          {
+            "node": "Send Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Digest": {
+      "main": [
+        [
+          {
+            "node": "Expand History Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expand History Rows": {
+      "main": [
+        [
+          {
+            "node": "Append History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append History": {
+      "main": [
+        [
+          {
+            "node": "Commit Seen Ledger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Dubai",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "alba-market-pulse"
+  },
+  "tags": []
+}

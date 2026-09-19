@@ -1,0 +1,50 @@
+{
+  "digestRecipient": "REPLACE_WITH_YOUR_EMAIL@example.com",
+  "historySheetId": "REPLACE_WITH_GOOGLE_SHEET_ID",
+  "historySheetTab": "Digest History",
+  "lookbackHours": 36,
+  "maxItems": 8,
+  "minScore": 3,
+  "geminiModel": "gemini-1.5-flash",
+  "brandName": "Alba Market Pulse",
+  "keywords": [
+    { "term": "used car", "weight": 4 },
+    { "term": "pre-owned", "weight": 4 },
+    { "term": "car price", "weight": 4 },
+    { "term": "resale value", "weight": 4 },
+    { "term": "car dealership", "weight": 3 },
+    { "term": "auto market", "weight": 3 },
+    { "term": "car sales", "weight": 3 },
+    { "term": "electric vehicle", "weight": 2 },
+    { "term": "ev", "weight": 2 },
+    { "term": "uae", "weight": 3 },
+    { "term": "dubai", "weight": 3 },
+    { "term": "abu dhabi", "weight": 2 },
+    { "term": "gcc", "weight": 2 },
+    { "term": "import", "weight": 2 },
+    { "term": "tariff", "weight": 2 },
+    { "term": "finance", "weight": 1 },
+    { "term": "insurance", "weight": 1 },
+    { "term": "recall", "weight": 2 }
+  ],
+  "sources": [
+    {
+      "id": "gnews-uae-used-cars",
+      "name": "Google News — UAE used-car market",
+      "url": "https://news.google.com/rss/search?q=%22used+cars%22+OR+%22pre-owned+cars%22+(UAE+OR+Dubai+OR+%22Abu+Dhabi%22)&hl=en-US&gl=US&ceid=US:en",
+      "weight": 3
+    },
+    {
+      "id": "gnews-uae-auto-market",
+      "name": "Google News — UAE auto & mobility",
+      "url": "https://news.google.com/rss/search?q=(UAE+OR+Dubai)+(%22car+market%22+OR+%22electric+vehicle%22+OR+%22auto+sales%22)&hl=en-US&gl=US&ceid=US:en",
+      "weight": 2
+    },
+    {
+      "id": "carscoops-global",
+      "name": "Carscoops — global auto industry",
+      "url": "https://www.carscoops.com/feed/",
+      "weight": 1
+    }
+  ]
+}
