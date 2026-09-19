@@ -1,0 +1,115 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Forecourt design tokens
+
+   The palette comes from the trade, not from a UI kit: cool catalogue stock
+   for the page, ink navy for text, and signal orange — the colour of an
+   indicator lamp — reserved strictly for money that is still at risk. Teal
+   marks margin that has actually been realised. Nothing else gets to be loud.
+--------------------------------------------------------------------------- */
+@theme {
+  --color-paper: #edf0f3;
+  --color-paper-edge: #dce1e8;
+  --color-surface: #ffffff;
+  --color-ink: #10161d;
+  --color-ink-soft: #5b6673;
+  --color-ink-faint: #5f6975;      /* 4.88:1 on paper — WCAG AA text PASS (was #8d97a3 @ 2.59:1 FAIL) */
+  --color-signal: #e05a26;         /* fill / marks only — 3.24:1 on paper, validated ≥3:1 */
+  --color-signal-text: #b8420f;    /* text on paper: 4.80:1 PASS */
+  --color-signal-wash: #fdeee7;
+  /* Validated with the dataviz palette checker: chroma floor, CVD separation
+     (ΔE 9.8 protan vs signal), normal-vision ΔE 27.2, ≥3:1 contrast. */
+  --color-margin: #0b8f72;         /* fill / marks only — 3.54:1 on paper, validated ≥3:1 */
+  --color-margin-text: #08725b;    /* text on paper: 5.15:1 PASS */
+  --color-margin-wash: #e7f4f0;
+  --color-rule: #ccd4de;
+
+  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  --radius-card: 4px;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  /* Money and distances are compared down a column, so figures must align. */
+  .tnum {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+
+  /* Section labels borrow the stamped look of an auction lot sheet. */
+  .eyebrow {
+    font-family: var(--font-display);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-faint);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+}
+
+@layer utilities {
+  /* Rows arrive in sequence on first paint — the only ambient motion here. */
+  @keyframes deal-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .deal-in {
+    animation: deal-in 0.32s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  }
+
+  /* A realtime change from another session flashes once, then settles. */
+  @keyframes live-mark {
+    0% {
+      background-color: var(--color-signal-wash);
+    }
+    100% {
+      background-color: transparent;
+    }
+  }
+
+  .live-mark {
+    animation: live-mark 1.4s ease-out both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
