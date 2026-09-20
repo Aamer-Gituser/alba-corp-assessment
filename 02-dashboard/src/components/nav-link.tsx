@@ -3,13 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-export function NavLink({
-  href,
-  children,
-}: {
-  href: string
-  children: React.ReactNode
-}) {
+export function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   const pathname = usePathname()
   const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
 
@@ -17,14 +11,22 @@ export function NavLink({
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className={`relative py-1 font-display text-[11px] font-bold tracking-[0.14em] uppercase transition-colors ${
-        active ? 'text-ink' : 'text-ink-faint hover:text-ink-soft'
-      }`}
+      className="relative rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all"
+      style={
+        active
+          ? {
+              background: 'oklch(1 0 0 / 0.09)',
+              color: 'var(--color-ink)',
+              boxShadow: 'inset 0 1px 0 0 oklch(1 0 0 / 0.12)',
+              fontFamily: 'var(--font-display)',
+            }
+          : {
+              color: 'var(--color-ink-faint)',
+              fontFamily: 'var(--font-display)',
+            }
+      }
     >
       {children}
-      {active && (
-        <span className="absolute -bottom-[14px] left-0 h-[2px] w-full bg-signal" />
-      )}
     </Link>
   )
 }

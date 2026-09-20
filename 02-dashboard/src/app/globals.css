@@ -1,113 +1,195 @@
 @import 'tailwindcss';
 
 /* ---------------------------------------------------------------------------
-   Forecourt design tokens
-
-   The palette comes from the trade, not from a UI kit: cool catalogue stock
-   for the page, ink navy for text, and signal orange — the colour of an
-   indicator lamp — reserved strictly for money that is still at risk. Teal
-   marks margin that has actually been realised. Nothing else gets to be loud.
+   Forecourt — Obsidian Command Center
+   Dark-luxe automotive fintech design system.
+   Deep canvas · liquid-glass surfaces · electric semantic palette.
 --------------------------------------------------------------------------- */
 @theme {
-  --color-paper: #edf0f3;
-  --color-paper-edge: #dce1e8;
-  --color-surface: #ffffff;
-  --color-ink: #10161d;
-  --color-ink-soft: #5b6673;
-  --color-ink-faint: #5f6975;      /* 4.88:1 on paper — WCAG AA text PASS (was #8d97a3 @ 2.59:1 FAIL) */
-  --color-signal: #e05a26;         /* fill / marks only — 3.24:1 on paper, validated ≥3:1 */
-  --color-signal-text: #b8420f;    /* text on paper: 4.80:1 PASS */
-  --color-signal-wash: #fdeee7;
-  /* Validated with the dataviz palette checker: chroma floor, CVD separation
-     (ΔE 9.8 protan vs signal), normal-vision ΔE 27.2, ≥3:1 contrast. */
-  --color-margin: #0b8f72;         /* fill / marks only — 3.54:1 on paper, validated ≥3:1 */
-  --color-margin-text: #08725b;    /* text on paper: 5.15:1 PASS */
-  --color-margin-wash: #e7f4f0;
-  --color-rule: #ccd4de;
+  /* Canvas layers */
+  --color-canvas:   #070C17;
+  --color-surface:  #0D1525;
+  --color-raised:   #131E35;
+  --color-glass:    oklch(1 0 0 / 0.04);
+  --color-glass-md: oklch(1 0 0 / 0.07);
 
-  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  /* Text */
+  --color-ink:       #E2EAF4;
+  --color-ink-soft:  #7A8FA8;
+  --color-ink-faint: #4A5A6E;
+  --color-paper:     #E2EAF4;  /* kept for compat */
+  --color-paper-edge: #1E2D47;
 
-  --radius-card: 4px;
+  /* Borders & rules */
+  --color-rule:      oklch(1 0 0 / 0.08);
+  --color-rule-soft: oklch(1 0 0 / 0.05);
+
+  /* Blue — Capital / Primary */
+  --color-blue:      #3B82F6;
+  --color-blue-text: #60A5FA;
+  --color-blue-wash: oklch(0.57 0.22 264 / 0.12);
+  --color-blue-glow: oklch(0.57 0.22 264 / 0.20);
+
+  /* Amber — Recon Spend */
+  --color-amber:      #F59E0B;
+  --color-amber-text: #FCD34D;
+  --color-amber-wash: oklch(0.78 0.17 80 / 0.12);
+
+  /* Emerald — Realised Margin */
+  --color-margin:      #10B981;
+  --color-margin-text: #34D399;
+  --color-margin-wash: oklch(0.70 0.17 162 / 0.12);
+
+  /* Signal / Risk — Loss / Alert */
+  --color-signal:      #EF4444;
+  --color-signal-text: #F87171;
+  --color-signal-wash: oklch(0.63 0.22 25 / 0.12);
+
+  /* Fonts */
+  --font-display: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    var(--font-jetbrains), ui-monospace, monospace;
+
+  --radius-card: 16px;
+  --radius-pill: 999px;
 }
 
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color-scheme: dark;
   }
 
   body {
-    background-color: var(--color-paper);
+    background-color: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    min-height: 100dvh;
   }
 
-  /* Money and distances are compared down a column, so figures must align. */
+  /* Tabular figures for financial data */
   .tnum {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     font-feature-settings: 'tnum';
+    letter-spacing: -0.01em;
   }
 
-  /* Section labels borrow the stamped look of an auction lot sheet. */
+  /* Stamped auction-lot eyebrow labels */
   .eyebrow {
     font-family: var(--font-display);
-    font-size: 0.6875rem;
+    font-size: 0.625rem;
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--color-ink-faint);
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-ink);
+    outline: 2px solid var(--color-blue);
     outline-offset: 2px;
-    border-radius: 2px;
+    border-radius: 4px;
   }
 
   ::selection {
-    background: var(--color-ink);
-    color: var(--color-paper);
+    background: var(--color-blue);
+    color: #fff;
   }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--color-rule); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-ink-faint); }
 }
 
 @layer utilities {
-  /* Rows arrive in sequence on first paint — the only ambient motion here. */
+  /* ── Glass card surface ── */
+  .glass {
+    background: var(--color-glass);
+    border: 1px solid var(--color-rule);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glass-md {
+    background: var(--color-glass-md);
+    border: 1px solid var(--color-rule);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  /* ── Inner rim highlight (bevel effect) ── */
+  .glass-rim {
+    box-shadow: inset 0 1px 0 0 oklch(1 0 0 / 0.12);
+  }
+
+  /* ── Glow halos ── */
+  .glow-blue   { box-shadow: 0 0 24px 0 var(--color-blue-glow); }
+  .glow-emerald{ box-shadow: 0 0 24px 0 oklch(0.70 0.17 162 / 0.25); }
+
+  /* ── Card hover lift ── */
+  .card-hover {
+    transition: transform 0.2s cubic-bezier(0.2,0.7,0.3,1),
+                box-shadow 0.2s cubic-bezier(0.2,0.7,0.3,1),
+                border-color 0.2s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 48px 0 oklch(0 0 0 / 0.35);
+    border-color: oklch(1 0 0 / 0.14);
+  }
+
+  /* ── Status badge dot ── */
+  @keyframes status-ping {
+    75%, 100% { transform: scale(2); opacity: 0; }
+  }
+  .status-dot-ping {
+    animation: status-ping 1.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+
+  /* ── Row deal-in ── */
   @keyframes deal-in {
-    from {
-      opacity: 0;
-      transform: translateY(6px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
   }
-
   .deal-in {
-    animation: deal-in 0.32s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+    animation: deal-in 0.36s cubic-bezier(0.2, 0.7, 0.3, 1) both;
   }
 
-  /* A realtime change from another session flashes once, then settles. */
+  /* ── Live mark flash ── */
   @keyframes live-mark {
-    0% {
-      background-color: var(--color-signal-wash);
-    }
-    100% {
-      background-color: transparent;
-    }
+    0%   { background-color: var(--color-blue-wash); }
+    100% { background-color: transparent; }
   }
-
   .live-mark {
     animation: live-mark 1.4s ease-out both;
   }
+
+  /* ── Cost-stack segment grow ── */
+  @keyframes bar-grow {
+    from { width: 0; opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .bar-grow {
+    animation: bar-grow 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  }
+
+  /* ── Fade slide up ── */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .fade-up { animation: fade-up 0.4s cubic-bezier(0.2,0.7,0.3,1) both; }
+  .fade-up-1 { animation-delay: 0.05s; }
+  .fade-up-2 { animation-delay: 0.10s; }
+  .fade-up-3 { animation-delay: 0.15s; }
+  .fade-up-4 { animation-delay: 0.20s; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

@@ -1,11 +1,7 @@
+'use client'
+
 import { money } from '@/lib/format'
 
-/**
- * The signature element: what a car cost to buy and to prepare, drawn against
- * what it is expected to fetch. Margin is the gap you can see rather than a
- * number you have to hunt for — and when the stack overruns the asking price,
- * the bar itself says so.
- */
 export function CostStack({
   acquisition,
   recon,
@@ -22,55 +18,96 @@ export function CostStack({
   const margin = target === null ? null : target - basis
   const underwater = margin !== null && margin < 0
 
-  const pct = (value: number) => `${Math.max((value / span) * 100, 0)}%`
+  const pct = (value: number) => `${Math.max((value / span) * 100, 0).toFixed(2)}%`
 
   return (
     <div>
-      <div className="flex h-7 w-full overflow-hidden bg-paper-edge" role="presentation">
+      {/* Animated segmented bar */}
+      <div className="relative h-8 w-full overflow-hidden rounded-xl" style={{ background: 'oklch(1 0 0 / 0.05)' }}>
+        {/* Acquisition */}
         <div
-          className="bg-ink"
-          style={{ width: pct(acquisition) }}
+          className="bar-grow absolute left-0 top-0 h-full"
+          style={{
+            width: pct(acquisition),
+            background: 'linear-gradient(90deg, #1D4ED8 0%, #3B82F6 100%)',
+            animationDuration: '0.7s',
+          }}
           title={`Bought ${money(acquisition)}`}
         />
+        {/* Recon */}
         {recon > 0 && (
           <div
-            className="border-l-2 border-surface bg-signal"
-            style={{ width: pct(recon) }}
+            className="bar-grow absolute top-0 h-full"
+            style={{
+              left: pct(acquisition),
+              width: pct(recon),
+              background: 'linear-gradient(90deg, #D97706 0%, #F59E0B 100%)',
+              animationDuration: '0.7s',
+              animationDelay: '0.1s',
+              borderLeft: '2px solid oklch(0 0 0 / 0.3)',
+            }}
             title={`Reconditioning ${money(recon)}`}
           />
         )}
+        {/* Margin */}
         {margin !== null && margin > 0 && (
           <div
-            className="border-l-2 border-surface bg-margin"
-            style={{ width: pct(margin) }}
+            className="bar-grow absolute top-0 h-full"
+            style={{
+              left: pct(basis),
+              width: pct(margin),
+              background: 'linear-gradient(90deg, #059669 0%, #10B981 100%)',
+              animationDuration: '0.7s',
+              animationDelay: '0.2s',
+              borderLeft: '2px solid oklch(0 0 0 / 0.3)',
+            }}
             title={`${targetLabel} ${money(margin)}`}
           />
         )}
+        {/* Underwater overlay */}
+        {underwater && (
+          <div
+            className="absolute right-0 top-0 h-full"
+            style={{
+              width: pct(Math.abs(margin!)),
+              background: 'linear-gradient(90deg, #DC2626 0%, #EF4444 100%)',
+              borderLeft: '2px solid oklch(0 0 0 / 0.3)',
+            }}
+          />
+        )}
+        {/* Inner shine */}
+        <div
+          className="pointer-events-none absolute inset-0 rounded-xl"
+          style={{ boxShadow: 'inset 0 1px 0 0 oklch(1 0 0 / 0.15)' }}
+        />
       </div>
 
-      <dl className="mt-2.5 grid grid-cols-2 gap-x-6 gap-y-1 text-[12.5px] sm:grid-cols-4">
-        <Row swatch="bg-ink" label="Bought" value={money(acquisition)} />
-        <Row swatch="bg-signal" label="Recon" value={money(recon)} />
-        <Row swatch="bg-paper-edge" label="Cost basis" value={money(basis)} />
-        <Row
-          swatch={underwater ? 'bg-signal' : 'bg-margin'}
+      {/* Legend row */}
+      <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-[12.5px] sm:grid-cols-4">
+        <LegendRow swatch="#3B82F6" label="Bought" value={money(acquisition)} />
+        <LegendRow swatch="#F59E0B" label="Recon" value={money(recon)} />
+        <LegendRow swatch="oklch(1 0 0 / 0.12)" label="Cost basis" value={money(basis)} />
+        <LegendRow
+          swatch={underwater ? '#EF4444' : '#10B981'}
           label={targetLabel}
           value={margin === null ? '—' : money(margin)}
-          emphasis={underwater ? 'loss' : 'gain'}
+          emphasis={underwater ? 'loss' : margin !== null && margin > 0 ? 'gain' : undefined}
         />
       </dl>
 
       {underwater && (
-        <p className="mt-2 border-l-2 border-signal bg-signal-wash px-2.5 py-1.5 text-[12.5px]">
-          Cost basis is above the asking price. This car loses money at the
-          current number.
-        </p>
+        <div
+          className="mt-3 rounded-xl px-3.5 py-2.5 text-[12.5px]"
+          style={{ background: 'var(--color-signal-wash)', border: '1px solid oklch(0.63 0.22 25 / 0.3)', color: 'var(--color-signal-text)' }}
+        >
+          ⚠ Cost basis exceeds asking price — this car loses money at the current number.
+        </div>
       )}
     </div>
   )
 }
 
-function Row({
+function LegendRow({
   swatch,
   label,
   value,
@@ -83,16 +120,20 @@ function Row({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span aria-hidden className={`inline-block size-2 shrink-0 ${swatch}`} />
-      <dt className="text-ink-soft">{label}</dt>
+      <span
+        aria-hidden
+        className="inline-block size-2.5 shrink-0 rounded-sm"
+        style={{ background: swatch }}
+      />
+      <dt style={{ color: 'var(--color-ink-faint)' }}>{label}</dt>
       <dd
-        className={`tnum ml-auto ${
-          emphasis === 'loss'
-            ? 'text-signal'
-            : emphasis === 'gain'
-              ? 'text-margin'
-              : 'text-ink'
-        }`}
+        className="tnum ml-auto font-semibold"
+        style={{
+          color:
+            emphasis === 'loss' ? 'var(--color-signal-text)'
+            : emphasis === 'gain' ? 'var(--color-margin-text)'
+            : 'var(--color-ink)',
+        }}
       >
         {value}
       </dd>

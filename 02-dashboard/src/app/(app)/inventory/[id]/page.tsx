@@ -8,59 +8,88 @@ import { RealtimeRefresh } from '@/components/realtime-refresh'
 import { EditVehicleDialog, DeleteVehicleButton } from '@/components/vehicle-form'
 import { AddReconDialog, ReconJobRow } from '@/components/recon-form'
 
-const STATUS_LABELS: Record<string, string> = {
-  sourcing: 'Sourcing',
-  reconditioning: 'In recon',
-  listed: 'Listed',
-  sold: 'Sold',
+const STATUS_META: Record<string, { label: string; color: string; bg: string; dot: string }> = {
+  sourcing:       { label: 'Sourcing',  color: 'var(--color-ink-soft)',   bg: 'oklch(1 0 0 / 0.05)', dot: '#7A8FA8' },
+  reconditioning: { label: 'In recon',  color: 'var(--color-amber-text)', bg: 'var(--color-amber-wash)', dot: '#F59E0B' },
+  listed:         { label: 'Listed',    color: 'var(--color-blue-text)',   bg: 'var(--color-blue-wash)',  dot: '#3B82F6' },
+  sold:           { label: 'Sold',      color: 'var(--color-margin-text)', bg: 'var(--color-margin-wash)', dot: '#10B981' },
 }
 
-export default async function VehicleDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+function GlassCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div
+      className={`rounded-2xl p-5 ${className}`}
+      style={{
+        background: 'var(--color-glass)',
+        border: '1px solid var(--color-rule)',
+        boxShadow: 'inset 0 1px 0 0 oklch(1 0 0 / 0.07)',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+export default async function VehicleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
 
   const [econRes, jobsRes] = await Promise.all([
     supabase.from('vehicle_economics').select('*').eq('id', id).maybeSingle(),
-    supabase
-      .from('reconditioning_jobs')
-      .select('*')
-      .eq('vehicle_id', id)
-      .order('performed_on', { ascending: false }),
+    supabase.from('reconditioning_jobs').select('*').eq('vehicle_id', id).order('performed_on', { ascending: false }),
   ])
 
   const v = econRes.data as VehicleEconomics | null
   if (!v) notFound()
 
   const jobs = (jobsRes.data as ReconJob[] | null) ?? []
-
   const price = v.status === 'sold' ? v.sold_price : v.asking_price
+  const meta = STATUS_META[v.status]
+
+  const marginVal = v.status === 'sold' ? v.realised_margin : v.projected_margin
+  const marginColor =
+    marginVal !== null && marginVal >= 0 ? 'var(--color-margin-text)' : 'var(--color-signal-text)'
 
   return (
     <>
       <RealtimeRefresh />
 
-      {/* Back link */}
-      <div className="mb-6">
+      {/* Breadcrumb */}
+      <div className="mb-6 fade-up">
         <Link
           href="/inventory"
-          className="text-[13px] text-ink-soft hover:text-ink hover:underline"
+          className="inline-flex items-center gap-1.5 text-[12.5px] transition-colors hover:text-[var(--color-ink)]"
+          style={{ color: 'var(--color-ink-faint)' }}
         >
-          ← Inventory
+          <span aria-hidden>←</span> Inventory
         </Link>
       </div>
 
-      {/* Header */}
-      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+      {/* Vehicle header */}
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4 fade-up fade-up-1">
         <div>
-          <p className="font-mono text-[11px] text-ink-soft">{stockNumber(v.id)}</p>
-          <h1 className="mt-0.5 text-[1.5rem] font-bold tracking-tight">
+          <div className="flex items-center gap-3">
+            <span
+              className="tnum rounded-md px-2 py-0.5 text-[10.5px] font-medium"
+              style={{ background: 'oklch(1 0 0 / 0.05)', color: 'var(--color-ink-faint)', fontFamily: 'var(--font-mono)' }}
+            >
+              {stockNumber(v.id)}
+            </span>
+            <span
+              className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+              style={{ background: meta?.bg, color: meta?.color }}
+            >
+              <span className="size-1.5 rounded-full" style={{ background: meta?.dot }} aria-hidden />
+              {meta?.label}
+            </span>
+          </div>
+          <h1
+            className="mt-3 text-[1.75rem] font-bold tracking-tight"
+            style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}
+          >
             {v.year} {v.make} {v.model}
           </h1>
-          <div className="mt-2 flex flex-wrap gap-3 text-[13px] text-ink-soft">
+          <div className="mt-2 flex flex-wrap gap-3 text-[12.5px]" style={{ color: 'var(--color-ink-faint)' }}>
             <span>{km(v.mileage_km)}</span>
             {v.body_type && <span>· {v.body_type}</span>}
             <span>
@@ -68,30 +97,17 @@ export default async function VehicleDetailPage({
               {v.sold_on ? ` · Sold ${shortDate(v.sold_on)}` : ` · ${v.days_in_stock} days in stock`}
             </span>
           </div>
-          <p className="mt-2">
-            <span
-              className={[
-                'inline-block rounded px-2 py-0.5 text-[11px] font-semibold',
-                v.status === 'listed' || v.status === 'sold'
-                  ? 'bg-[#e7f4f0] text-[#08725b]'
-                  : v.status === 'reconditioning'
-                    ? 'bg-[#fdeee7] text-[#b8420f]'
-                    : 'bg-paper-edge text-ink-soft',
-              ].join(' ')}
-            >
-              {STATUS_LABELS[v.status]}
-            </span>
-          </p>
         </div>
+
         <div className="flex gap-2">
           <EditVehicleDialog vehicle={v} />
           <DeleteVehicleButton vehicleId={v.id} />
         </div>
       </div>
 
-      {/* Cost stack — the signature element */}
-      <div className="mb-8 rounded-[var(--radius-card)] border border-rule bg-surface p-6">
-        <h2 className="eyebrow mb-5">Economics</h2>
+      {/* Economics card */}
+      <GlassCard className="mb-5 fade-up fade-up-2">
+        <h2 className="eyebrow mb-5">Cost engine</h2>
         <CostStack
           acquisition={v.acquisition_price}
           recon={v.recon_total}
@@ -99,83 +115,92 @@ export default async function VehicleDetailPage({
           targetLabel={v.status === 'sold' ? 'Realised margin' : 'Projected margin'}
         />
 
-        <dl className="mt-6 grid grid-cols-2 gap-x-8 gap-y-3 text-[13px] sm:grid-cols-4">
-          <div>
-            <dt className="eyebrow">Acquisition</dt>
-            <dd className="tnum mt-1 text-ink">{money(v.acquisition_price)}</dd>
-          </div>
-          <div>
-            <dt className="eyebrow">Recon total</dt>
-            <dd className="tnum mt-1" style={{ color: 'var(--color-signal-text)' }}>
-              {money(v.recon_total)}
-            </dd>
-          </div>
-          <div>
-            <dt className="eyebrow">Cost basis</dt>
-            <dd className="tnum mt-1 font-semibold text-ink">{money(v.cost_basis)}</dd>
-          </div>
-          <div>
-            <dt className="eyebrow">{v.status === 'sold' ? 'Realised margin' : 'Projected margin'}</dt>
-            <dd
-              className="tnum mt-1 font-semibold"
-              style={{
-                color:
-                  (v.status === 'sold' ? v.realised_margin : v.projected_margin) !== null &&
-                  (v.status === 'sold' ? v.realised_margin! : v.projected_margin!) >= 0
-                    ? 'var(--color-margin-text)'
-                    : 'var(--color-signal-text)',
-              }}
-            >
-              {v.status === 'sold' ? money(v.realised_margin) : money(v.projected_margin)}
-            </dd>
-          </div>
-          {v.asking_price && (
-            <div>
-              <dt className="eyebrow">Asking price</dt>
-              <dd className="tnum mt-1 text-ink">{money(v.asking_price)}</dd>
+        <dl className="mt-6 grid grid-cols-2 gap-x-8 gap-y-4 text-[13px] sm:grid-cols-4">
+          {[
+            { label: 'Acquisition', value: money(v.acquisition_price), color: 'var(--color-blue-text)' },
+            { label: 'Recon total', value: money(v.recon_total), color: 'var(--color-amber-text)' },
+            { label: 'Cost basis',  value: money(v.cost_basis),  color: 'var(--color-ink)', bold: true },
+            {
+              label: v.status === 'sold' ? 'Realised margin' : 'Projected margin',
+              value: money(marginVal),
+              color: marginColor,
+              bold: true,
+            },
+            ...(v.asking_price ? [{ label: 'Asking price', value: money(v.asking_price), color: 'var(--color-ink)' }] : []),
+            ...(v.sold_price   ? [{ label: 'Sold price',   value: money(v.sold_price),   color: 'var(--color-margin-text)' }] : []),
+          ].map(({ label, value, color, bold }) => (
+            <div key={label}>
+              <dt className="eyebrow mb-1">{label}</dt>
+              <dd
+                className="tnum text-[14px]"
+                style={{ color, fontWeight: bold ? 700 : 400, fontFamily: 'var(--font-mono)' }}
+              >
+                {value}
+              </dd>
             </div>
-          )}
-          {v.sold_price && (
-            <div>
-              <dt className="eyebrow">Sold price</dt>
-              <dd className="tnum mt-1 text-ink">{money(v.sold_price)}</dd>
-            </div>
-          )}
+          ))}
         </dl>
-      </div>
+      </GlassCard>
 
-      {/* Reconditioning jobs */}
-      <section aria-labelledby="recon-heading">
+      {/* Recon jobs */}
+      <section aria-labelledby="recon-heading" className="fade-up fade-up-3">
         <div className="mb-4 flex items-center justify-between">
-          <h2 id="recon-heading" className="text-[15px] font-semibold">
-            Reconditioning jobs
+          <div className="flex items-center gap-3">
+            <h2
+              id="recon-heading"
+              className="text-[14px] font-semibold"
+              style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}
+            >
+              Reconditioning jobs
+            </h2>
             {jobs.length > 0 && (
-              <span className="ml-2 text-[12px] font-normal text-ink-soft">
-                ({jobs.length})
+              <span
+                className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                style={{ background: 'var(--color-amber-wash)', color: 'var(--color-amber-text)' }}
+              >
+                {jobs.length}
               </span>
             )}
-          </h2>
+            {jobs.length > 0 && (
+              <span
+                className="tnum text-[12px] font-semibold"
+                style={{ color: 'var(--color-amber-text)' }}
+              >
+                {money(v.recon_total)} total
+              </span>
+            )}
+          </div>
           <AddReconDialog vehicleId={v.id} />
         </div>
 
         {jobs.length === 0 ? (
-          <div className="rounded-[var(--radius-card)] border border-rule bg-surface px-6 py-10 text-center">
-            <p className="text-[14px] text-ink-soft">
-              No recon jobs yet. Add the first one to start tracking preparation costs.
+          <div
+            className="rounded-2xl px-6 py-10 text-center"
+            style={{ background: 'oklch(1 0 0 / 0.03)', border: '1px solid var(--color-rule)' }}
+          >
+            <p className="text-[13px]" style={{ color: 'var(--color-ink-faint)' }}>
+              No recon jobs yet — add the first one to start tracking preparation costs.
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-[var(--radius-card)] border border-rule bg-surface">
+          <div
+            className="overflow-hidden rounded-2xl"
+            style={{
+              background: 'var(--color-glass)',
+              border: '1px solid var(--color-rule)',
+              boxShadow: 'inset 0 1px 0 0 oklch(1 0 0 / 0.07)',
+            }}
+          >
             <table className="w-full text-[13px]">
               <thead>
-                <tr className="border-b border-rule text-left">
-                  <th className="eyebrow px-4 py-2.5 font-normal">Date</th>
-                  <th className="eyebrow px-4 py-2.5 font-normal">Category</th>
-                  <th className="eyebrow px-4 py-2.5 font-normal">Description</th>
-                  <th className="eyebrow hidden px-4 py-2.5 font-normal sm:table-cell">Vendor</th>
-                  <th className="eyebrow px-4 py-2.5 font-normal text-right">Cost</th>
-                  <th className="eyebrow px-4 py-2.5 font-normal text-center">Done</th>
-                  <th className="sr-only px-4 py-2.5">Actions</th>
+                <tr style={{ borderBottom: '1px solid var(--color-rule)' }}>
+                  <th className="eyebrow px-5 py-3 text-left font-normal">Date</th>
+                  <th className="eyebrow px-5 py-3 text-left font-normal">Category</th>
+                  <th className="eyebrow px-5 py-3 text-left font-normal">Description</th>
+                  <th className="eyebrow hidden px-5 py-3 text-left font-normal sm:table-cell">Vendor</th>
+                  <th className="eyebrow px-5 py-3 text-right font-normal">Cost</th>
+                  <th className="eyebrow px-5 py-3 text-center font-normal">Done</th>
+                  <th className="sr-only px-5 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -189,10 +214,12 @@ export default async function VehicleDetailPage({
       </section>
 
       {v.notes && (
-        <div className="mt-8">
-          <h2 className="eyebrow mb-2">Notes</h2>
-          <p className="text-[13px] text-ink-soft">{v.notes}</p>
-        </div>
+        <GlassCard className="mt-5 fade-up fade-up-4">
+          <h2 className="eyebrow mb-3">Notes</h2>
+          <p className="text-[13px] leading-relaxed" style={{ color: 'var(--color-ink-soft)' }}>
+            {v.notes}
+          </p>
+        </GlassCard>
       )}
     </>
   )

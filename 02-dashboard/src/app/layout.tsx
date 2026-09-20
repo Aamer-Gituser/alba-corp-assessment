@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import { Archivo, Inter_Tight, IBM_Plex_Mono } from 'next/font/google'
+import { Sora, Inter_Tight, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 
-const archivo = Archivo({
+const sora = Sora({
   subsets: ['latin'],
-  variable: '--font-archivo',
-  weight: ['600', '700', '800'],
+  variable: '--font-sora',
+  weight: ['400', '600', '700', '800'],
   display: 'swap',
 })
 
@@ -16,9 +16,9 @@ const interTight = Inter_Tight({
   display: 'swap',
 })
 
-const plexMono = IBM_Plex_Mono({
+const jetbrains = JetBrains_Mono({
   subsets: ['latin'],
-  variable: '--font-plex-mono',
+  variable: '--font-jetbrains',
   weight: ['400', '500', '600'],
   display: 'swap',
 })
@@ -34,9 +34,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body
-        className={`${archivo.variable} ${interTight.variable} ${plexMono.variable}`}
-      >
+      <body className={`${sora.variable} ${interTight.variable} ${jetbrains.variable}`}>
         {children}
       </body>
     </html>

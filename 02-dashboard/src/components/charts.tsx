@@ -1,56 +1,43 @@
 'use client'
 
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
+  Bar, BarChart, CartesianGrid, Cell, Legend,
+  ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
-import type {
-  MonthlyPerformance,
-  ReconByCategory,
-} from '@/lib/supabase/types'
+import type { MonthlyPerformance, ReconByCategory } from '@/lib/supabase/types'
 import { money, moneyCompact, monthLabel } from '@/lib/format'
 
-const INK = '#10161d'
-const INK_FAINT = '#5f6975'  /* 4.88:1 on paper — WCAG AA PASS */
-const RULE = '#e2e7ed'
-const SIGNAL = '#e05a26'
-const MARGIN = '#0b8f72'
+const BLUE    = '#3B82F6'
+const AMBER   = '#F59E0B'
+const EMERALD = '#10B981'
+const RULE    = 'oklch(1 0 0 / 0.08)'
+const LABEL   = '#4A5A6E'
+const INK     = '#E2EAF4'
 
 const axis = {
-  stroke: RULE,
-  tick: { fill: INK_FAINT, fontSize: 11 },
+  stroke: 'none',
+  tick: { fill: LABEL, fontSize: 11, fontFamily: 'var(--font-jetbrains)' },
   tickLine: false,
   axisLine: { stroke: RULE },
 }
 
-/** One tooltip shape for every chart, so hovering feels the same everywhere. */
-function Panel({
-  label,
-  rows,
-}: {
-  label: string
-  rows: { key: string; value: string; swatch?: string }[]
-}) {
+function Panel({ label, rows }: { label: string; rows: { key: string; value: string; swatch?: string }[] }) {
   return (
-    <div className="border border-rule bg-surface px-3 py-2 shadow-sm">
-      <p className="eyebrow mb-1.5">{label}</p>
+    <div
+      className="rounded-xl px-3.5 py-2.5 shadow-xl"
+      style={{
+        background: '#0D1525',
+        border: '1px solid oklch(1 0 0 / 0.12)',
+        backdropFilter: 'blur(12px)',
+      }}
+    >
+      <p className="eyebrow mb-2">{label}</p>
       {rows.map((row) => (
-        <p key={row.key} className="flex items-center gap-2 text-[13px] text-ink">
+        <p key={row.key} className="flex items-center gap-2 text-[12px]" style={{ color: INK }}>
           {row.swatch && (
-            <span
-              aria-hidden
-              className="inline-block size-2"
-              style={{ background: row.swatch }}
-            />
+            <span aria-hidden className="inline-block size-2 rounded-full" style={{ background: row.swatch }} />
           )}
-          <span className="text-ink-soft">{row.key}</span>
+          <span style={{ color: LABEL }}>{row.key}</span>
           <span className="tnum ml-auto">{row.value}</span>
         </p>
       ))}
@@ -58,26 +45,38 @@ function Panel({
   )
 }
 
-function TableTwin({
-  caption,
-  head,
-  rows,
-}: {
-  caption: string
-  head: string[]
-  rows: string[][]
-}) {
+function ChartCard({ title, sub, children }: { title: string; sub: string; children: React.ReactNode }) {
   return (
-    <details className="mt-3 border-t border-rule pt-2">
-      <summary className="cursor-pointer text-[12px] text-ink-soft hover:text-ink">
+    <div
+      className="rounded-2xl p-5"
+      style={{
+        background: 'var(--color-glass)',
+        border: '1px solid var(--color-rule)',
+        boxShadow: 'inset 0 1px 0 0 oklch(1 0 0 / 0.07)',
+      }}
+    >
+      <p className="text-[13px] font-semibold" style={{ color: INK, fontFamily: 'var(--font-display)' }}>{title}</p>
+      <p className="mb-5 mt-0.5 text-[11px]" style={{ color: LABEL }}>{sub}</p>
+      {children}
+    </div>
+  )
+}
+
+function TableTwin({ caption, head, rows }: { caption: string; head: string[]; rows: string[][] }) {
+  return (
+    <details className="mt-3" style={{ borderTop: '1px solid var(--color-rule)' }}>
+      <summary
+        className="cursor-pointer pt-2 text-[11.5px]"
+        style={{ color: LABEL }}
+      >
         Show as table
       </summary>
-      <table className="mt-2 w-full text-[12.5px]">
+      <table className="mt-2 w-full text-[12px]">
         <caption className="sr-only">{caption}</caption>
         <thead>
-          <tr className="text-left text-ink-faint">
+          <tr>
             {head.map((h) => (
-              <th key={h} scope="col" className="py-1 font-medium">
+              <th key={h} scope="col" className="py-1 text-left font-medium" style={{ color: LABEL }}>
                 {h}
               </th>
             ))}
@@ -85,9 +84,9 @@ function TableTwin({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row[0]} className="border-t border-rule/60">
+            <tr key={row[0]} style={{ borderTop: '1px solid oklch(1 0 0 / 0.05)' }}>
               {row.map((cell, i) => (
-                <td key={i} className={i === 0 ? 'py-1' : 'tnum py-1'}>
+                <td key={i} className={i === 0 ? 'py-1' : 'tnum py-1'} style={{ color: i === 0 ? INK : LABEL }}>
                   {cell}
                 </td>
               ))}
@@ -99,173 +98,116 @@ function TableTwin({
   )
 }
 
-/**
- * Margin realised per month — one measure, one series, so no legend and no
- * second axis. Volume lives in its own chart rather than being folded onto a
- * second y-scale here.
- */
-export function MarginByMonth({ data }: { data: MonthlyPerformance[] }) {
-  const chart = data.map((row) => ({
-    month: monthLabel(row.month),
-    margin: Number(row.realised_margin),
-  }))
-  const empty = chart.every((row) => row.margin === 0)
-
+function EmptyPlot({ message }: { message: string }) {
   return (
-    <div className="rounded-[var(--radius-card)] border border-rule bg-surface p-5">
-      <p className="eyebrow mb-0.5">Margin realised</p>
-      <p className="mb-4 text-[12px] text-ink-soft">Last 6 months</p>
+    <div
+      className="flex h-[200px] items-center justify-center rounded-xl"
+      style={{ border: '1px dashed oklch(1 0 0 / 0.1)' }}
+    >
+      <p className="max-w-[28ch] text-center text-[12.5px]" style={{ color: LABEL }}>{message}</p>
+    </div>
+  )
+}
+
+export function MarginByMonth({ data }: { data: MonthlyPerformance[] }) {
+  const chart = data.map((row) => ({ month: monthLabel(row.month), margin: Number(row.realised_margin) }))
+  const empty = chart.every((r) => r.margin === 0)
+  return (
+    <ChartCard title="Margin realised" sub="Last 6 months">
       {empty ? (
         <EmptyPlot message="No cars sold yet. Margin appears here once a vehicle is marked sold." />
       ) : (
         <>
-          <ResponsiveContainer width="100%" height={210}>
-            <BarChart data={chart} margin={{ top: 8, right: 4, bottom: 0, left: -12 }}>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={chart} margin={{ top: 4, right: 4, bottom: 0, left: -8 }}>
+              <defs>
+                <linearGradient id="marginGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={EMERALD} stopOpacity={1} />
+                  <stop offset="100%" stopColor={EMERALD} stopOpacity={0.6} />
+                </linearGradient>
+              </defs>
               <CartesianGrid stroke={RULE} vertical={false} />
               <XAxis dataKey="month" {...axis} />
-              <YAxis
-                {...axis}
-                width={62}
-                tickFormatter={(value: number) => moneyCompact(value)}
-              />
+              <YAxis {...axis} width={60} tickFormatter={(v: number) => moneyCompact(v)} />
               <Tooltip
-                cursor={{ fill: 'rgba(16,22,29,0.04)' }}
+                cursor={{ fill: 'oklch(1 0 0 / 0.04)' }}
                 content={({ active, payload, label }) =>
                   active && payload?.length ? (
-                    <Panel
-                      label={String(label)}
-                      rows={[
-                        {
-                          key: 'Margin realised',
-                          value: money(Number(payload[0].value)),
-                          swatch: MARGIN,
-                        },
-                      ]}
-                    />
+                    <Panel label={String(label)} rows={[{ key: 'Margin', value: money(Number(payload[0].value)), swatch: EMERALD }]} />
                   ) : null
                 }
               />
-              <Bar dataKey="margin" fill={MARGIN} radius={[4, 4, 0, 0]} maxBarSize={38} />
+              <Bar dataKey="margin" fill="url(#marginGrad)" radius={[6, 6, 0, 0]} maxBarSize={36} />
             </BarChart>
           </ResponsiveContainer>
-          <TableTwin
-            caption="Margin realised by month"
-            head={['Month', 'Margin']}
-            rows={chart.map((row) => [row.month, money(row.margin)])}
-          />
+          <TableTwin caption="Margin realised by month" head={['Month', 'Margin']} rows={chart.map((r) => [r.month, money(r.margin)])} />
         </>
       )}
-    </div>
+    </ChartCard>
   )
 }
 
-/**
- * Where reconditioning money goes. Nominal categories, so every bar takes the
- * same hue — darkening by value would double-encode the bar length.
- */
 export function ReconSpend({ data }: { data: ReconByCategory[] }) {
   const chart = data
-    .map((row) => ({
-      category: row.category,
-      cost: Number(row.total_cost),
-      jobs: Number(row.job_count),
-    }))
-    .filter((row) => row.cost > 0)
-
+    .map((row) => ({ category: row.category, cost: Number(row.total_cost), jobs: Number(row.job_count) }))
+    .filter((r) => r.cost > 0)
   return (
-    <div className="rounded-[var(--radius-card)] border border-rule bg-surface p-5">
-      <p className="eyebrow mb-0.5">Recon spend by category</p>
-      <p className="mb-4 text-[12px] text-ink-soft">All time</p>
+    <ChartCard title="Recon spend by category" sub="All time">
       {!chart.length ? (
         <EmptyPlot message="No reconditioning logged yet. Add a job to a vehicle to see the split." />
       ) : (
         <>
-          <ResponsiveContainer width="100%" height={210}>
-            <BarChart
-              data={chart}
-              layout="vertical"
-              margin={{ top: 4, right: 12, bottom: 0, left: 8 }}
-              barCategoryGap={6}
-            >
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={chart} layout="vertical" margin={{ top: 4, right: 12, bottom: 0, left: 8 }} barCategoryGap={6}>
               <CartesianGrid stroke={RULE} horizontal={false} />
-              <XAxis
-                type="number"
-                {...axis}
-                tickFormatter={(value: number) => moneyCompact(value)}
-              />
-              <YAxis
-                type="category"
-                dataKey="category"
-                {...axis}
-                width={86}
-                tick={{ fill: INK, fontSize: 12 }}
-              />
+              <XAxis type="number" {...axis} tickFormatter={(v: number) => moneyCompact(v)} />
+              <YAxis type="category" dataKey="category" {...axis} width={86} tick={{ fill: INK, fontSize: 12, fontFamily: 'var(--font-inter-tight)' }} />
               <Tooltip
-                cursor={{ fill: 'rgba(16,22,29,0.04)' }}
+                cursor={{ fill: 'oklch(1 0 0 / 0.04)' }}
                 content={({ active, payload, label }) =>
                   active && payload?.length ? (
                     <Panel
                       label={String(label)}
                       rows={[
-                        {
-                          key: 'Spend',
-                          value: money(Number(payload[0].value)),
-                          swatch: SIGNAL,
-                        },
-                        {
-                          key: 'Jobs',
-                          value: String(payload[0].payload.jobs),
-                        },
+                        { key: 'Spend', value: money(Number(payload[0].value)), swatch: AMBER },
+                        { key: 'Jobs', value: String(payload[0].payload.jobs) },
                       ]}
                     />
                   ) : null
                 }
               />
-              <Bar dataKey="cost" radius={[0, 4, 4, 0]} maxBarSize={22}>
-                {chart.map((row) => (
-                  <Cell key={row.category} fill={SIGNAL} />
-                ))}
+              <Bar dataKey="cost" radius={[0, 6, 6, 0]} maxBarSize={20}>
+                {chart.map((row) => <Cell key={row.category} fill={AMBER} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-          <TableTwin
-            caption="Reconditioning spend by category"
-            head={['Category', 'Spend', 'Jobs']}
-            rows={chart.map((row) => [row.category, money(row.cost), String(row.jobs)])}
-          />
+          <TableTwin caption="Recon spend by category" head={['Category', 'Spend', 'Jobs']} rows={chart.map((r) => [r.category, money(r.cost), String(r.jobs)])} />
         </>
       )}
-    </div>
+    </ChartCard>
   )
 }
 
-/**
- * Cars in versus cars out. Two series, but both are counts on the same scale,
- * so they share one axis honestly.
- */
 export function VolumeByMonth({ data }: { data: MonthlyPerformance[] }) {
   const chart = data.map((row) => ({
     month: monthLabel(row.month),
     acquired: Number(row.acquired_count),
     sold: Number(row.sold_count),
   }))
-  const empty = chart.every((row) => row.acquired === 0 && row.sold === 0)
-
+  const empty = chart.every((r) => r.acquired === 0 && r.sold === 0)
   return (
-    <div className="rounded-[var(--radius-card)] border border-rule bg-surface p-5">
-      <p className="eyebrow mb-0.5">Volume — bought vs sold</p>
-      <p className="mb-4 text-[12px] text-ink-soft">Last 6 months</p>
+    <ChartCard title="Volume — bought vs sold" sub="Last 6 months">
       {empty ? (
         <EmptyPlot message="No movement in this window yet." />
       ) : (
         <>
-          <ResponsiveContainer width="100%" height={210}>
-            <BarChart data={chart} margin={{ top: 8, right: 4, bottom: 0, left: -20 }} barGap={2}>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={chart} margin={{ top: 4, right: 4, bottom: 0, left: -16 }} barGap={3}>
               <CartesianGrid stroke={RULE} vertical={false} />
               <XAxis dataKey="month" {...axis} />
-              <YAxis {...axis} width={40} allowDecimals={false} />
+              <YAxis {...axis} width={36} allowDecimals={false} />
               <Tooltip
-                cursor={{ fill: 'rgba(16,22,29,0.04)' }}
+                cursor={{ fill: 'oklch(1 0 0 / 0.04)' }}
                 content={({ active, payload, label }) =>
                   active && payload?.length ? (
                     <Panel
@@ -273,7 +215,7 @@ export function VolumeByMonth({ data }: { data: MonthlyPerformance[] }) {
                       rows={payload.map((item) => ({
                         key: item.name === 'acquired' ? 'Bought' : 'Sold',
                         value: String(item.value),
-                        swatch: item.name === 'acquired' ? SIGNAL : MARGIN,
+                        swatch: item.name === 'acquired' ? BLUE : EMERALD,
                       }))}
                     />
                   ) : null
@@ -281,35 +223,23 @@ export function VolumeByMonth({ data }: { data: MonthlyPerformance[] }) {
               />
               <Legend
                 verticalAlign="top"
-                align="left"
+                align="right"
                 height={28}
-                iconType="square"
-                iconSize={8}
+                iconType="circle"
+                iconSize={7}
                 formatter={(value) => (
-                  <span className="text-[12px] text-ink-soft">
+                  <span className="text-[11px]" style={{ color: LABEL }}>
                     {value === 'acquired' ? 'Bought' : 'Sold'}
                   </span>
                 )}
               />
-              <Bar dataKey="acquired" fill={SIGNAL} radius={[4, 4, 0, 0]} maxBarSize={18} />
-              <Bar dataKey="sold" fill={MARGIN} radius={[4, 4, 0, 0]} maxBarSize={18} />
+              <Bar dataKey="acquired" fill={BLUE} radius={[4, 4, 0, 0]} maxBarSize={18} />
+              <Bar dataKey="sold" fill={EMERALD} radius={[4, 4, 0, 0]} maxBarSize={18} />
             </BarChart>
           </ResponsiveContainer>
-          <TableTwin
-            caption="Vehicles bought and sold by month"
-            head={['Month', 'Bought', 'Sold']}
-            rows={chart.map((row) => [row.month, String(row.acquired), String(row.sold)])}
-          />
+          <TableTwin caption="Volume by month" head={['Month', 'Bought', 'Sold']} rows={chart.map((r) => [r.month, String(r.acquired), String(r.sold)])} />
         </>
       )}
-    </div>
-  )
-}
-
-function EmptyPlot({ message }: { message: string }) {
-  return (
-    <div className="flex h-[210px] items-center justify-center border border-dashed border-rule px-6">
-      <p className="max-w-[28ch] text-center text-[13px] text-ink-soft">{message}</p>
-    </div>
+    </ChartCard>
   )
 }

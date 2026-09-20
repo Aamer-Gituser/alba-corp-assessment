@@ -1,7 +1,6 @@
 'use client'
 
 import { useActionState, useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import type { VehicleEconomics, VehicleStatus } from '@/lib/supabase/types'
 import {
   createVehicle,
@@ -12,11 +11,19 @@ import {
 } from '@/app/(app)/actions'
 
 const STATUSES: { value: VehicleStatus; label: string }[] = [
-  { value: 'sourcing', label: 'Sourcing' },
+  { value: 'sourcing',       label: 'Sourcing' },
   { value: 'reconditioning', label: 'In recon' },
-  { value: 'listed', label: 'Listed' },
-  { value: 'sold', label: 'Sold' },
+  { value: 'listed',         label: 'Listed' },
+  { value: 'sold',           label: 'Sold' },
 ]
+
+const cls =
+  'w-full rounded-xl px-3.5 py-2.5 text-[13px] transition-all outline-none focus:ring-2 focus:ring-[#3B82F6]/40 focus:border-[#3B82F6]'
+const clsStyle = {
+  background: 'oklch(1 0 0 / 0.04)',
+  border: '1px solid oklch(1 0 0 / 0.10)',
+  color: 'var(--color-ink)',
+}
 
 function VehicleForm({
   initial,
@@ -44,104 +51,50 @@ function VehicleForm({
         <Field label="Make" name="make" required defaultValue={initial?.make} />
         <Field label="Model" name="model" required defaultValue={initial?.model} />
       </div>
-
       <div className="grid grid-cols-2 gap-3">
-        <Field
-          label="Year"
-          name="year"
-          type="number"
-          required
-          defaultValue={initial?.year ?? new Date().getFullYear()}
-          min={1950}
-          max={new Date().getFullYear() + 1}
-        />
-        <Field
-          label="Mileage (km)"
-          name="mileage_km"
-          type="number"
-          required
-          defaultValue={initial?.mileage_km ?? 0}
-          min={0}
-        />
+        <Field label="Year" name="year" type="number" required defaultValue={initial?.year ?? new Date().getFullYear()} min={1950} max={new Date().getFullYear() + 1} />
+        <Field label="Mileage (km)" name="mileage_km" type="number" required defaultValue={initial?.mileage_km ?? 0} min={0} />
       </div>
-
       <Field label="Body type" name="body_type" defaultValue={initial?.body_type ?? ''} />
-
       <div className="grid grid-cols-2 gap-3">
-        <Field
-          label="Acquisition price (AED)"
-          name="acquisition_price"
-          type="number"
-          required
-          defaultValue={initial?.acquisition_price ?? ''}
-          min={0}
-        />
-        <Field
-          label="Acquired on"
-          name="acquired_on"
-          type="date"
-          required
-          defaultValue={initial?.acquired_on?.slice(0, 10) ?? today}
-        />
+        <Field label="Acquisition price (AED)" name="acquisition_price" type="number" required defaultValue={initial?.acquisition_price ?? ''} min={0} step="0.01" />
+        <Field label="Acquired on" name="acquired_on" type="date" required defaultValue={initial?.acquired_on?.slice(0, 10) ?? today} />
       </div>
 
       <div>
-        <label className="eyebrow mb-1.5 block" htmlFor="v-status">
-          Status
-        </label>
+        <label className="eyebrow mb-1.5 block">Status</label>
         <select
-          id="v-status"
           name="status"
           value={status}
           onChange={(e) => setStatus(e.target.value as VehicleStatus)}
-          className="w-full rounded border border-rule bg-surface px-3 py-2 text-[13px] text-ink focus:outline-none focus:ring-1 focus:ring-ink"
+          className={cls}
+          style={clsStyle}
         >
           {STATUSES.map((s) => (
-            <option key={s.value} value={s.value}>
+            <option key={s.value} value={s.value} style={{ background: '#0D1525' }}>
               {s.label}
             </option>
           ))}
         </select>
       </div>
 
-      <Field
-        label="Asking price (AED)"
-        name="asking_price"
-        type="number"
-        defaultValue={initial?.asking_price ?? ''}
-        min={0}
-      />
+      <Field label="Asking price (AED)" name="asking_price" type="number" defaultValue={initial?.asking_price ?? ''} min={0} step="0.01" />
 
       {status === 'sold' && (
         <div className="grid grid-cols-2 gap-3">
-          <Field
-            label="Sold price (AED)"
-            name="sold_price"
-            type="number"
-            required
-            defaultValue={initial?.sold_price ?? ''}
-            min={0}
-          />
-          <Field
-            label="Sold on"
-            name="sold_on"
-            type="date"
-            required
-            defaultValue={initial?.sold_on?.slice(0, 10) ?? today}
-          />
+          <Field label="Sold price (AED)" name="sold_price" type="number" required defaultValue={initial?.sold_price ?? ''} min={0} step="0.01" />
+          <Field label="Sold on" name="sold_on" type="date" required defaultValue={initial?.sold_on?.slice(0, 10) ?? today} />
         </div>
       )}
 
-      <Field
-        label="Notes"
-        name="notes"
-        as="textarea"
-        defaultValue={initial?.notes ?? ''}
-        rows={2}
-      />
+      <Field label="Notes" name="notes" as="textarea" defaultValue={initial?.notes ?? ''} rows={2} />
 
       {state.error && (
-        <p role="alert" className="text-[12.5px]" style={{ color: 'var(--color-signal-text)' }}>
+        <p
+          role="alert"
+          className="rounded-xl px-3.5 py-2.5 text-[12.5px]"
+          style={{ background: 'var(--color-signal-wash)', color: 'var(--color-signal-text)', border: '1px solid oklch(0.63 0.22 25 / 0.3)' }}
+        >
           {state.error}
         </p>
       )}
@@ -149,7 +102,8 @@ function VehicleForm({
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded bg-ink px-4 py-2.5 text-[13px] font-semibold text-paper transition-opacity disabled:opacity-50"
+        className="w-full rounded-xl py-2.5 text-[13px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+        style={{ background: 'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%)', color: '#fff', fontFamily: 'var(--font-display)' }}
       >
         {pending ? 'Saving…' : initial?.id ? 'Save changes' : 'Add vehicle'}
       </button>
@@ -167,6 +121,7 @@ function Field({
   rows,
   min,
   max,
+  step,
 }: {
   label: string
   name: string
@@ -177,15 +132,14 @@ function Field({
   rows?: number
   min?: number
   max?: number
+  step?: string
 }) {
   const id = `vf-${name}`
-  const cls =
-    'w-full rounded border border-rule bg-surface px-3 py-2 text-[13px] text-ink focus:outline-none focus:ring-1 focus:ring-ink'
   return (
     <div>
       <label className="eyebrow mb-1.5 block" htmlFor={id}>
         {label}
-        {required && <span aria-hidden className="ml-0.5" style={{ color: 'var(--color-signal-text)' }}>*</span>}
+        {required && <span aria-hidden className="ml-1" style={{ color: 'var(--color-signal-text)' }}>*</span>}
       </label>
       {as === 'textarea' ? (
         <textarea
@@ -194,6 +148,7 @@ function Field({
           rows={rows ?? 3}
           defaultValue={defaultValue ?? ''}
           className={cls}
+          style={clsStyle}
         />
       ) : (
         <input
@@ -204,14 +159,16 @@ function Field({
           defaultValue={defaultValue ?? ''}
           min={min}
           max={max}
+          step={step}
           className={cls}
+          style={clsStyle}
         />
       )}
     </div>
   )
 }
 
-function Dialog({
+function GlassDialog({
   title,
   trigger,
   children,
@@ -236,19 +193,30 @@ function Dialog({
       <dialog
         ref={ref}
         onClose={close}
-        className="m-auto w-full max-w-lg rounded-[4px] border border-rule bg-surface p-6 shadow-xl backdrop:bg-ink/30 backdrop:backdrop-blur-sm"
+        className="m-auto w-full max-w-lg rounded-3xl p-0 shadow-2xl"
+        style={{
+          background: '#0D1525',
+          border: '1px solid oklch(1 0 0 / 0.12)',
+          boxShadow: '0 32px 80px 0 oklch(0 0 0 / 0.6)',
+          color: 'var(--color-ink)',
+        }}
       >
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-[15px] font-semibold">{title}</h2>
-          <button
-            onClick={close}
-            aria-label="Close"
-            className="text-ink-soft hover:text-ink"
-          >
-            ✕
-          </button>
+        <div className="p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="text-[15px] font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}>
+              {title}
+            </h2>
+            <button
+              onClick={close}
+              aria-label="Close"
+              className="flex size-7 items-center justify-center rounded-lg text-[12px] transition-colors hover:bg-white/10"
+              style={{ color: 'var(--color-ink-faint)' }}
+            >
+              ✕
+            </button>
+          </div>
+          {children(close)}
         </div>
-        {children(close)}
       </dialog>
     </>
   )
@@ -256,35 +224,37 @@ function Dialog({
 
 export function AddVehicleDialog() {
   return (
-    <Dialog
+    <GlassDialog
       title="Add vehicle"
       trigger={
-        <button className="rounded bg-ink px-4 py-2 text-[13px] font-semibold text-paper">
-          Add vehicle
+        <button
+          className="rounded-xl px-4 py-2 text-[13px] font-semibold transition-opacity hover:opacity-90"
+          style={{ background: 'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%)', color: '#fff', fontFamily: 'var(--font-display)' }}
+        >
+          + Add vehicle
         </button>
       }
     >
-      {(close) => (
-        <VehicleForm action={createVehicle} onSuccess={close} />
-      )}
-    </Dialog>
+      {(close) => <VehicleForm action={createVehicle} onSuccess={close} />}
+    </GlassDialog>
   )
 }
 
 export function EditVehicleDialog({ vehicle }: { vehicle: VehicleEconomics }) {
   return (
-    <Dialog
+    <GlassDialog
       title="Edit vehicle"
       trigger={
-        <button className="rounded border border-rule bg-surface px-4 py-2 text-[13px] font-medium text-ink hover:bg-paper">
+        <button
+          className="rounded-xl px-4 py-2 text-[13px] font-medium transition-colors hover:bg-white/5"
+          style={{ border: '1px solid oklch(1 0 0 / 0.12)', color: 'var(--color-ink)', background: 'oklch(1 0 0 / 0.04)' }}
+        >
           Edit
         </button>
       }
     >
-      {(close) => (
-        <VehicleForm initial={vehicle} action={updateVehicle} onSuccess={close} />
-      )}
-    </Dialog>
+      {(close) => <VehicleForm initial={vehicle} action={updateVehicle} onSuccess={close} />}
+    </GlassDialog>
   )
 }
 
@@ -296,7 +266,8 @@ export function DeleteVehicleButton({ vehicleId }: { vehicleId: string }) {
     return (
       <button
         onClick={() => setConfirmed(true)}
-        className="rounded border border-rule px-4 py-2 text-[13px] font-medium text-ink-soft hover:border-[#b8420f] hover:text-[#b8420f]"
+        className="rounded-xl px-4 py-2 text-[13px] font-medium transition-colors"
+        style={{ border: '1px solid oklch(0.63 0.22 25 / 0.3)', color: 'var(--color-signal-text)', background: 'var(--color-signal-wash)' }}
       >
         Delete
       </button>
@@ -304,24 +275,21 @@ export function DeleteVehicleButton({ vehicleId }: { vehicleId: string }) {
   }
 
   return (
-    <form
-      action={deleteVehicle}
-      onSubmit={() => setPending(true)}
-      className="flex gap-2"
-    >
+    <form action={deleteVehicle} onSubmit={() => setPending(true)} className="flex gap-2">
       <input type="hidden" name="id" value={vehicleId} />
       <button
         type="submit"
         disabled={pending}
-        className="rounded px-4 py-2 text-[13px] font-semibold text-paper disabled:opacity-50"
-        style={{ background: 'var(--color-signal-text)' }}
+        className="rounded-xl px-4 py-2 text-[13px] font-semibold transition-opacity disabled:opacity-50"
+        style={{ background: 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)', color: '#fff' }}
       >
         {pending ? 'Deleting…' : 'Confirm delete'}
       </button>
       <button
         type="button"
         onClick={() => setConfirmed(false)}
-        className="rounded border border-rule px-3 py-2 text-[13px] text-ink-soft"
+        className="rounded-xl px-3 py-2 text-[13px] transition-colors hover:bg-white/5"
+        style={{ border: '1px solid oklch(1 0 0 / 0.1)', color: 'var(--color-ink-soft)' }}
       >
         Cancel
       </button>
