@@ -90,8 +90,11 @@ export function ArchiveStrip({ focalDate, initialPlates, archiveError }: Archive
           <li key={plate.date}>
             <Link
               href={`/?date=${plate.date}`}
-              scroll={false}
+              scroll={true}
               className="group block bg-[#0c0e15]/70 backdrop-blur-md border border-white/[0.08] rounded-lg overflow-hidden archive-card-3d focus-visible:outline focus-visible:outline-2 focus-visible:outline-[--arctic] focus-visible:outline-offset-2"
+              onClick={() => {
+                setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+              }}
             >
               <div className="relative aspect-[4/3] overflow-hidden bg-[#070810]">
                 {plate.media_type !== "image" ? (

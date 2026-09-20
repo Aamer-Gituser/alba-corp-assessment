@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { formatIndexDate, formatLongDate, plateNumber } from "@/lib/dates";
 import { posterImage } from "@/lib/plates";
 import type { Apod } from "@/lib/types";
@@ -15,6 +18,8 @@ import { PlateImage } from "./plate-image";
 export function FocalPlate({ plate }: { plate: Apod }) {
   const poster = posterImage(plate);
   const isVideo = plate.media_type !== "image";
+  const hdSrc = plate.hdurl ?? plate.url;
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   return (
     <article>
@@ -43,7 +48,14 @@ export function FocalPlate({ plate }: { plate: Apod }) {
         {/* Ambient aura */}
         <div className="focal-glow" aria-hidden />
 
-        <div className="relative rounded-xl md:rounded-2xl overflow-hidden border border-white/[0.12] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)]">
+        <div
+          className="relative aspect-[4/3] sm:aspect-[16/9] w-full rounded-xl md:rounded-2xl overflow-hidden border border-white/[0.12] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] cursor-zoom-in"
+          onClick={() => !isVideo && setLightboxOpen(true)}
+          role={!isVideo ? "button" : undefined}
+          aria-label={!isVideo ? "View full resolution image" : undefined}
+          tabIndex={!isVideo ? 0 : undefined}
+          onKeyDown={(e) => !isVideo && e.key === "Enter" && setLightboxOpen(true)}
+        >
           <PlateImage
             src={poster}
             alt={plate.title}
@@ -52,17 +64,68 @@ export function FocalPlate({ plate }: { plate: Apod }) {
             sizes="(min-width: 1280px) 1120px, 100vw"
           />
 
-          {/* Floating action pill */}
-          <a
-            href={plate.hdurl ?? plate.url}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/70 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-[11px] font-[family-name:var(--font-geist-mono)] text-white tracking-widest hover:border-[--amber] hover:shadow-[0_0_16px_rgba(212,144,58,0.3)]"
-          >
-            ↗ {isVideo ? "WATCH" : "FULL RES"}
-          </a>
+          {/* Floating action pills */}
+          <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            {!isVideo && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setLightboxOpen(true); }}
+                className="bg-black/70 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-[11px] font-[family-name:var(--font-geist-mono)] text-white tracking-widest hover:border-[--arctic] hover:shadow-[0_0_16px_rgba(77,182,200,0.3)] transition-all"
+              >
+                ⊞ EXPAND
+              </button>
+            )}
+            <a
+              href={hdSrc}
+              target="_blank"
+              rel="noreferrer noopener"
+              onClick={(e) => e.stopPropagation()}
+              className="bg-black/70 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-[11px] font-[family-name:var(--font-geist-mono)] text-white tracking-widest hover:border-[--amber] hover:shadow-[0_0_16px_rgba(212,144,58,0.3)] transition-all"
+            >
+              ↗ {isVideo ? "WATCH" : "FULL RES"}
+            </a>
+          </div>
         </div>
       </figure>
+
+      {/* Fullscreen lightbox */}
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl"
+          onClick={() => setLightboxOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Full resolution image"
+        >
+          <button
+            type="button"
+            className="absolute top-5 right-6 text-white/60 hover:text-white font-[family-name:var(--font-geist-mono)] text-xs tracking-widest uppercase transition-colors"
+            onClick={() => setLightboxOpen(false)}
+          >
+            ✕ Close
+          </button>
+          <a
+            href={hdSrc}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="absolute top-5 left-6 text-[--amber] hover:text-amber-300 font-[family-name:var(--font-geist-mono)] text-xs tracking-widest uppercase transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            ↗ Open original
+          </a>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={hdSrc}
+            alt={plate.title}
+            className="max-h-[90vh] max-w-[95vw] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <p className="absolute bottom-5 left-1/2 -translate-x-1/2 font-[family-name:var(--font-geist-mono)] text-[10px] uppercase tracking-[0.3em] text-white/30">
+            {plate.title} · {formatIndexDate(plate.date)}
+          </p>
+        </div>
+      )}
+
 
       {/* Explanation + telemetry */}
       <div className="animate-entrance grid gap-10 lg:grid-cols-[minmax(0,1fr)_280px]">

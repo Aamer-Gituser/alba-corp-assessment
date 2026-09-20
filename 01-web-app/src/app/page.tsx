@@ -50,18 +50,45 @@ export default async function ArchivePage({
         archiveError={archiveResult.ok ? undefined : archiveResult.error}
       />
 
-      <footer className="mt-20 border-t border-plate-edge pt-6">
-        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-graphite">
-          Images courtesy NASA APOD ·{" "}
-          <a
-            href="https://apod.nasa.gov/apod/astropix.html"
-            target="_blank"
-            rel="noreferrer noopener"
-            className="text-safelight transition-colors hover:underline"
-          >
-            Source archive ↗
-          </a>
-        </p>
+      <footer className="mt-24 border-t border-white/[0.07] pt-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          <div className="flex flex-col gap-3">
+            <p className="font-[family-name:var(--font-geist-mono)] text-[10px] uppercase tracking-[0.25em] text-white/50">
+              About this archive
+            </p>
+            <p className="max-w-md font-[family-name:var(--font-geist-sans)] text-xs leading-relaxed text-white/40">
+              Apogee is a date-addressable archive of NASA's Astronomy Picture of the Day (APOD), curated for discovery and contemplation of the cosmos.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:text-right">
+            <p className="font-[family-name:var(--font-geist-mono)] text-[10px] uppercase tracking-[0.25em] text-white/50">
+              Resources
+            </p>
+            <nav className="flex flex-col sm:items-end gap-1.5 text-xs">
+              <a
+                href="https://apod.nasa.gov"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="text-[--arctic] hover:text-[--arctic]/80 transition-colors font-[family-name:var(--font-geist-mono)]"
+              >
+                NASA APOD ↗
+              </a>
+              <a
+                href="https://science.nasa.gov/apod"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="text-[--arctic] hover:text-[--arctic]/80 transition-colors font-[family-name:var(--font-geist-mono)]"
+              >
+                Science.NASA.gov ↗
+              </a>
+            </nav>
+          </div>
+        </div>
+        <div className="mt-6 pt-6 border-t border-white/[0.07]">
+          <p className="font-[family-name:var(--font-geist-mono)] text-[9px] uppercase tracking-[0.2em] text-white/30">
+            Images courtesy NASA APOD · MIT License · Apogee Archive
+          </p>
+        </div>
       </footer>
     </div>
   );
