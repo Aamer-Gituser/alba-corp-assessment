@@ -5,7 +5,7 @@
   "lookbackHours": 36,
   "maxItems": 8,
   "minScore": 3,
-  "geminiModel": "gemini-1.5-flash",
+  "geminiModel": "gemini-2.5-flash",
   "brandName": "Alba Market Pulse",
   "keywords": [
     { "term": "used car", "weight": 4 },

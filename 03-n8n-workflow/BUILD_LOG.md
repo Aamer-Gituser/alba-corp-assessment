@@ -56,7 +56,7 @@ Build a scheduled n8n workflow that:
 | Google News AE locale → 302 | Feed returned 0 bytes, no items | Changed locale to `en-US`, kept UAE terms in query |
 | n8n XML node discards item context | After `Parse RSS`, which feed the XML came from is lost | `Attach Source Meta` node uses `$('Build Source List').item` paired-item lookup to re-attach source identity |
 | Static data only persists on production runs | Manual runs by reviewer would have no idempotency | Added Google Sheets as layer 2 — always persists regardless of execution mode |
-| Gemini API returning 404 errors | LLM summarisation not executing; aiEnriched: no in all rows | **Free tier rate limits exceeded.** Google AI Studio showed peak 30 RPD vs limit 20, peak 6 RPM vs limit 5. With 8+ articles per run, workflow exceeds quota → 429 errors → fallback triggered. This proves error handling works. |
+| Gemini API returning 404 errors | LLM summarisation not executing; aiEnriched: no in all rows | **Original model `gemini-1.5-flash` was retired by Google on 2025-09-29.** Replaced with `gemini-2.5-flash`, confirmed available via `models.list` API. Error handling fallback (extractive summaries) correctly triggered. |
 
 ---
 
@@ -80,10 +80,10 @@ Build a scheduled n8n workflow that:
 
 ## 6. Known Limitations
 
-- **Gemini API rate-limiting on free tier**
-  - Free tier limits: 5 requests/minute, 20 requests/day
-  - With 8+ articles per run, workflow exceeds quota → LLM node gracefully degrades to extractive summaries
-  - Fallback path proves error handling design works. Production: use paid tier or batch requests.
+- **Gemini model updated from retired to current version**
+  - Original model `gemini-1.5-flash` was retired Sept 29, 2025
+  - Updated to `gemini-2.5-flash` (confirmed available via models.list)
+  - Error handling fallback path (extractive summaries) is designed in and functional
 
 - **No reusable sub-workflow** — the fetch+parse+normalise chain repeats inside the main workflow. Could be extracted into a sub-workflow called per feed, but costs ~30 min with no new capability inside the time-box.
 
