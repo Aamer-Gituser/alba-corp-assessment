@@ -1,10 +1,8 @@
 # 08 · Revision 1 — verified defects and scope change
 
-**Supersedes** the conflicting parts of 00, 01, 02, 04, 05, 07. Where this file and
-an older one disagree, this file wins. Code is NOT changed until the plan is
-approved; every fix below is applied in Phase A.
+**Historical revision — superseded on 2026-09-20.** Retained to explain earlier decisions, not as active instructions. The current [master plan](00-MASTER-PLAN.md), [audit](08-REVIEW-FINDINGS.md) and [verification plan](05-VERIFICATION-PLAN.md) take precedence. The monthly aggregation, recon UPDATE parent check and global contrast fixes below are now present in source; hosted verification is separate.
 
-All four items were independently re-verified against the actual files.
+Historical caveats: the monthly-window sum equals an all-time KPI only if both cover the same sales; the original child-reparenting example overstates the effect on B's totals because B's job RLS may hide A's job. The invariant violation is the unauthorized parent association itself. Check it directly. Historical green “committed” markers mean intended scope, not verified implementation. Do not reuse the old timing allowance.
 
 ---
 

@@ -2,132 +2,73 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '../login/actions'
 import { NavLink } from '@/components/nav-link'
+import { BackButton } from '@/components/back-button'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('dealership_name, avatar_url')
-    .eq('id', user?.id ?? '')
-    .maybeSingle()
-
+  const { data: profile } = await supabase.from('profiles').select('dealership_name, avatar_url').eq('id', user?.id ?? '').maybeSingle()
   const name = profile?.dealership_name ?? user?.email ?? '—'
   const initials = name.slice(0, 2).toUpperCase()
-
   return (
-    <div className="min-h-dvh" style={{ background: 'var(--color-canvas)' }}>
-      {/* ── Glass Header ── */}
-      <header
-        className="sticky top-0 z-30 border-b"
-        style={{
-          borderColor: 'var(--color-rule)',
-          background: 'oklch(0.07 0.03 240 / 0.85)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-        }}
-      >
-        <div className="mx-auto flex max-w-7xl items-center gap-6 px-5 py-3">
+    <div className="min-h-dvh" style={{ color: 'var(--color-ink)' }}>
+      <div className="ambient ambient-one" />
+      <div className="ambient ambient-two" />
+      <div className="noise" />
+      <header className="sticky top-0 z-40 border-b" style={{ borderColor: 'oklch(0.78 0.025 252 / 60%)', background: 'oklch(0.965 0.012 252 / 0.65)', backdropFilter: 'blur(28px) saturate(180%)' }}>
+        <div className="mx-auto grid h-[72px] max-w-[1680px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 sm:px-6 lg:grid-cols-[auto_1fr_auto] lg:px-8">
           {/* Brand */}
-          <Link
-            href="/"
-            className="flex shrink-0 items-center gap-2.5"
-            aria-label="Forecourt home"
-          >
-            <div
-              className="flex size-7 items-center justify-center rounded-lg text-[10px] font-bold"
-              style={{
-                background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
-                boxShadow: '0 0 12px 0 oklch(0.57 0.22 264 / 0.4)',
-                color: '#fff',
-                fontFamily: 'var(--font-sora)',
-              }}
-            >
-              FC
-            </div>
-            <span
-              className="hidden text-[14px] font-bold tracking-tight sm:block"
-              style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}
-            >
-              Forecourt
-            </span>
-          </Link>
-
-          {/* Pill nav */}
-          <nav
-            className="flex items-center gap-1 rounded-xl p-1"
-            style={{ background: 'oklch(1 0 0 / 0.04)', border: '1px solid var(--color-rule)' }}
-            aria-label="Sections"
-          >
+          <div className="flex min-w-0 items-center gap-3">
+            <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Forecourt home">
+              <span className="brand-mark">FC</span>
+              <span className="hidden text-sm font-semibold sm:block" style={{ fontFamily: 'var(--font-display)' }}>Forecourt</span>
+            </Link>
+          </div>
+          {/* Center nav */}
+          <nav className="liquid-nav mx-auto hidden lg:flex" aria-label="Primary navigation">
             <NavLink href="/">Overview</NavLink>
             <NavLink href="/inventory">Inventory</NavLink>
+            <NavLink href="/analytics">Analytics</NavLink>
           </nav>
-
-          {/* Right rail */}
-          <div className="ml-auto flex items-center gap-3">
-            {/* Live indicator */}
-            <div className="hidden items-center gap-1.5 sm:flex">
-              <span className="relative flex size-2">
-                <span
-                  className="status-dot-ping absolute inline-flex size-full rounded-full"
-                  style={{ background: 'var(--color-margin)', opacity: 0.6 }}
-                />
-                <span
-                  className="relative inline-flex size-2 rounded-full"
-                  style={{ background: 'var(--color-margin)' }}
-                />
-              </span>
-              <span className="text-[11px]" style={{ color: 'var(--color-ink-faint)' }}>
-                Live
-              </span>
+          {/* Right actions */}
+          <div className="flex items-center justify-end gap-3">
+            <div className="hidden items-center gap-2 text-xs sm:flex" style={{ color: 'var(--color-ink-faint)' }}>
+              <span className="live-dot" />Live Sync
             </div>
-
-            {/* Avatar chip */}
             <Link
               href="/profile"
-              className="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-white/5"
-              aria-label="Profile settings"
+              className="hidden items-center gap-2 rounded-xl border px-2.5 py-1.5 transition-all hover:bg-white/60 sm:flex"
+              style={{ borderColor: 'var(--color-rule)', background: 'oklch(1 0 0 / 40%)' }}
             >
-              <div
-                className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full text-[10px] font-bold"
-                style={{
-                  background: 'linear-gradient(135deg, #1E2D47 0%, #0D1525 100%)',
-                  border: '1px solid var(--color-rule)',
-                  color: 'var(--color-ink-soft)',
-                  fontFamily: 'var(--font-display)',
-                }}
-              >
+              <span className="avatar-ring text-[10px] font-semibold">
                 {profile?.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
+                  // eslint-disable-next-line @next/next/no-img-element -- user-hosted Supabase avatar URL
                   <img src={profile.avatar_url} alt={name} className="size-full object-cover" />
-                ) : (
-                  initials
-                )}
-              </div>
-              <span
-                className="hidden max-w-[120px] truncate text-[12.5px] font-medium sm:block"
-                style={{ color: 'var(--color-ink-soft)' }}
-              >
-                {name}
+                ) : initials}
               </span>
+              <span className="hidden max-w-[120px] truncate text-xs font-semibold xl:block" style={{ color: 'var(--color-ink)' }}>{name}</span>
             </Link>
-
-            {/* Sign out */}
             <form action={signOut}>
-              <button
-                type="submit"
-                className="rounded-lg px-2.5 py-1.5 text-[12px] font-medium transition-colors hover:bg-white/5"
-                style={{ color: 'var(--color-ink-faint)' }}
-              >
+              <button className="signout-btn">
                 Sign out
               </button>
             </form>
           </div>
         </div>
+        <div className="border-t px-4 py-2 sm:px-6 lg:hidden" style={{ borderColor: 'var(--color-rule-soft)' }}>
+          <nav className="liquid-nav flex w-max max-w-full overflow-x-auto" aria-label="Primary navigation">
+            <NavLink href="/">Overview</NavLink>
+            <NavLink href="/inventory">Inventory</NavLink>
+            <NavLink href="/analytics">Analytics</NavLink>
+          </nav>
+        </div>
       </header>
-
-      <main className="mx-auto max-w-7xl px-5 py-8">{children}</main>
+      <main className="relative z-10 mx-auto w-full max-w-[1680px] px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
+        <div className="mb-4">
+          <BackButton />
+        </div>
+        {children}
+      </main>
     </div>
   )
 }

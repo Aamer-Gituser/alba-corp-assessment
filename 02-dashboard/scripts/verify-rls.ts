@@ -7,6 +7,7 @@
  * Usage: npm run verify:rls
  * Prerequisite: npm run seed
  */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 
 import { createClient } from '@supabase/supabase-js'
 import { config } from 'dotenv'
@@ -58,12 +59,6 @@ async function main() {
   const bCarId = bVehicles?.[0]?.id
 
   if (!bCarId) { console.error('No vehicles for Dealer B — run npm run seed'); process.exit(1) }
-
-  const { data: bJobs } = await service
-    .from('reconditioning_jobs')
-    .select('id')
-    .eq('owner_id', b.id)
-    .limit(1)
 
   // ── Snapshot B's recon_total BEFORE any attacks ───────────────────────────
   const beforeBEcon = await service
@@ -119,7 +114,8 @@ async function main() {
 
   // 8. RPC dashboard_stats — returns data scoped to A's own rows only
   const { data: t8Stats } = await anon.rpc('dashboard_stats')
-  const statsRow = Array.isArray(t8Stats) ? (t8Stats as any[])[0] : (t8Stats as any)
+  const statsRows = Array.isArray(t8Stats) ? t8Stats : []
+  const statsRow = statsRows[0] as { fleet_count?: unknown } | undefined
   const fleetCount = statsRow?.fleet_count ?? -1
   typeof fleetCount === 'number' && fleetCount >= 0
     ? pass(8, `dashboard_stats returns data for own rows (fleet_count=${fleetCount})`)

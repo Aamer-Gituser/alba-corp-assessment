@@ -1,0 +1,2 @@
+'use client'
+export default function Error({ reset }: { reset: () => void }) { return <div className="glass rounded-xl p-6"><h2 className="font-semibold">Analytics is unavailable</h2><p className="mt-2 text-sm text-[var(--color-ink-soft)]">The dashboard could not load this data.</p><button onClick={reset} className="mt-4 rounded-lg bg-[var(--color-blue)] px-3 py-2 text-sm text-white">Try again</button></div> }

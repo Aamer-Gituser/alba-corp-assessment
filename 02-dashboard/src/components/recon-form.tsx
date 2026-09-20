@@ -8,9 +8,8 @@ import {
   updateReconJob,
   deleteReconJob,
   toggleReconJob,
-  EMPTY_FORM_STATE,
-  type FormState,
 } from '@/app/(app)/actions'
+import { EMPTY_FORM_STATE } from '@/lib/form-state'
 import { money, shortDate } from '@/lib/format'
 
 const CAT_LABELS: Record<ReconCategory, string> = {
@@ -31,13 +30,8 @@ const CAT_COLORS: Record<ReconCategory, string> = {
   paperwork:  '#6B7280',
 }
 
-const cls =
-  'w-full rounded-xl px-3.5 py-2.5 text-[13px] transition-all outline-none focus:ring-2 focus:ring-[#3B82F6]/40 focus:border-[#3B82F6]'
-const clsStyle = {
-  background: 'oklch(1 0 0 / 0.04)',
-  border: '1px solid oklch(1 0 0 / 0.10)',
-  color: 'var(--color-ink)',
-}
+const cls = 'field'
+const clsStyle = {}
 
 function ReconForm({
   vehicleId,
@@ -69,7 +63,7 @@ function ReconForm({
           </label>
           <select id="rc-cat" name="category" defaultValue={job?.category} className={cls} style={clsStyle}>
             {RECON_CATEGORIES.map((c) => (
-              <option key={c} value={c} style={{ background: '#0D1525' }}>{CAT_LABELS[c]}</option>
+              <option key={c} value={c}>{CAT_LABELS[c]}</option>
             ))}
           </select>
         </div>
@@ -122,12 +116,7 @@ function ReconForm({
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-xl py-2.5 text-[13px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
-        style={{ background: 'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%)', color: '#fff', fontFamily: 'var(--font-display)' }}
-      >
+      <button type="submit" disabled={pending} className="primary-action w-full justify-center py-2.5 disabled:opacity-50">
         {pending ? 'Saving…' : job ? 'Save changes' : 'Add job'}
       </button>
     </form>
@@ -157,17 +146,7 @@ function GlassDialog({
   return (
     <>
       {trigger}
-      <dialog
-        ref={ref}
-        onClose={onClose}
-        className="m-auto w-full max-w-lg rounded-3xl p-0 shadow-2xl"
-        style={{
-          background: '#0D1525',
-          border: '1px solid oklch(1 0 0 / 0.12)',
-          boxShadow: '0 32px 80px 0 oklch(0 0 0 / 0.6)',
-          color: 'var(--color-ink)',
-        }}
-      >
+      <dialog ref={ref} onClose={onClose} className="glass-modal m-auto w-full max-w-lg rounded-[var(--radius-card)] p-0">
         <div className="p-6">
           <div className="mb-5 flex items-center justify-between">
             <h2 className="text-[15px] font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}>
@@ -236,66 +215,44 @@ function EditReconDialog({ job }: { job: ReconJob }) {
 export function ReconJobRow({ job }: { job: ReconJob }) {
   const catColor = CAT_COLORS[job.category as ReconCategory] ?? '#6B7280'
   return (
-    <tr
-      className="transition-colors hover:bg-white/[0.02]"
-      style={{ borderBottom: '1px solid var(--color-rule-soft)' }}
-    >
-      <td className="px-5 py-3.5 text-[12px]" style={{ color: 'var(--color-ink-faint)' }}>
-        {shortDate(job.performed_on)}
-      </td>
-      <td className="px-5 py-3.5">
-        <span
-          className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-          style={{ background: `${catColor}1A`, color: catColor }}
+    <div className="job-row" style={{ borderBottom: '1px solid var(--color-rule)' }}>
+      {/* Completion toggle */}
+      <form action={toggleReconJob}>
+        <input type="hidden" name="id" value={job.id} />
+        <input type="hidden" name="vehicle_id" value={job.vehicle_id} />
+        <input type="hidden" name="completed" value={String(job.completed)} />
+        <button
+          type="submit"
+          aria-label={job.completed ? 'Mark incomplete' : 'Mark complete'}
+          className="flex size-5 items-center justify-center rounded-md transition-all hover:scale-110"
+          style={job.completed ? { background: 'var(--color-margin-text)', border: 'none' } : { background: 'transparent', border: '1px solid oklch(0.78 0.025 252 / 55%)' }}
         >
-          {CAT_LABELS[job.category as ReconCategory] ?? job.category}
-        </span>
-      </td>
-      <td className="px-5 py-3.5 text-[12.5px]" style={{ color: 'var(--color-ink)' }}>
-        {job.description}
-      </td>
-      <td className="hidden px-5 py-3.5 text-[12px] sm:table-cell" style={{ color: 'var(--color-ink-faint)' }}>
-        {job.vendor ?? '—'}
-      </td>
-      <td className="tnum px-5 py-3.5 text-right text-[12.5px] font-semibold" style={{ color: 'var(--color-amber-text)' }}>
-        {money(job.cost)}
-      </td>
-      <td className="px-5 py-3.5 text-center">
-        <form action={toggleReconJob}>
+          {job.completed && <span aria-hidden className="block text-[10px] leading-none text-white">✓</span>}
+        </button>
+      </form>
+      {/* Category icon */}
+      <span className="job-icon" style={{ background: `${catColor}1A`, color: catColor }}>
+        <span className="text-[10px] font-bold">{job.category.slice(0, 2).toUpperCase()}</span>
+      </span>
+      {/* Details */}
+      <div className="min-w-0">
+        <p className={`text-sm font-medium${job.completed ? ' line-through opacity-55' : ''}`} style={{ fontFamily: 'var(--font-display)' }}>{job.description}</p>
+        <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-faint)' }}>
+          <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: `${catColor}1A`, color: catColor }}>{CAT_LABELS[job.category as ReconCategory] ?? job.category}</span>
+          {job.vendor && <> · {job.vendor}</>} · {shortDate(job.performed_on)}
+        </p>
+      </div>
+      {/* Cost */}
+      <span className="money ml-auto" style={{ color: 'var(--color-amber-text)' }}>{money(job.cost)}</span>
+      {/* Actions */}
+      <div className="flex items-center gap-2">
+        <EditReconDialog job={job} />
+        <form action={deleteReconJob}>
           <input type="hidden" name="id" value={job.id} />
           <input type="hidden" name="vehicle_id" value={job.vehicle_id} />
-          <input type="hidden" name="completed" value={String(job.completed)} />
-          <button
-            type="submit"
-            aria-label={job.completed ? 'Mark incomplete' : 'Mark complete'}
-            className="flex size-5 items-center justify-center rounded-md transition-all hover:scale-110"
-            style={
-              job.completed
-                ? { background: 'var(--color-margin)', border: 'none' }
-                : { background: 'transparent', border: '1px solid oklch(1 0 0 / 0.15)' }
-            }
-          >
-            {job.completed && <span aria-hidden className="block text-[10px] leading-none text-white">✓</span>}
-          </button>
+          <button type="submit" aria-label="Delete job" className="text-[11px] transition-colors hover:text-[var(--color-signal-text)]" style={{ color: 'var(--color-ink-faint)' }}>✕</button>
         </form>
-      </td>
-      <td className="px-5 py-3.5">
-        <div className="flex items-center gap-3">
-          <EditReconDialog job={job} />
-          <form action={deleteReconJob}>
-            <input type="hidden" name="id" value={job.id} />
-            <input type="hidden" name="vehicle_id" value={job.vehicle_id} />
-            <button
-              type="submit"
-              aria-label="Delete job"
-              className="text-[11px] transition-colors hover:text-[#EF4444]"
-              style={{ color: 'var(--color-ink-faint)' }}
-            >
-              ✕
-            </button>
-          </form>
-        </div>
-      </td>
-    </tr>
+      </div>
+    </div>
   )
 }

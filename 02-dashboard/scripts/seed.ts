@@ -60,7 +60,7 @@ const DEALER_B = {
 
 async function upsertUser(email: string, password: string, dealership: string) {
   // Try create; if already exists, get ID via admin list
-  const { data: created, error: createErr } = await supabase.auth.admin.createUser({
+  const { data: created } = await supabase.auth.admin.createUser({
     email,
     password,
     email_confirm: true,

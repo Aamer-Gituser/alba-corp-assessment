@@ -84,3 +84,19 @@ export async function signOut() {
   revalidatePath('/', 'layout')
   redirect('/login')
 }
+
+export async function forgotPassword(
+  _prev: AuthState,
+  formData: FormData
+): Promise<AuthState> {
+  const email = String(formData.get('email') ?? '').trim()
+  if (!email) return { error: 'Enter your email address.', notice: null }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/login?reset=1`,
+  })
+
+  if (error) return { error: error.message, notice: null }
+  return { error: null, notice: 'Check your inbox — we sent a password reset link.' }
+}

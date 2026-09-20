@@ -5,9 +5,8 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { RECON_CATEGORIES, VEHICLE_STATUSES } from '@/lib/supabase/types'
+import type { FormState } from '@/lib/form-state'
 
-export type FormState = { error: string | null; ok: boolean }
-export const EMPTY_FORM_STATE: FormState = { error: null, ok: false }
 
 const optionalNumber = z
   .string()
@@ -293,5 +292,31 @@ export async function uploadAvatar(
   if (dbError) return { error: dbError.message, ok: false }
 
   revalidatePath('/profile')
+  return { error: null, ok: true }
+}
+
+export async function updatePassword(
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const current  = String(formData.get('current_password') ?? '').trim()
+  const next     = String(formData.get('new_password') ?? '').trim()
+  const confirm  = String(formData.get('confirm_password') ?? '').trim()
+
+  if (!current || !next || !confirm) return { error: 'All password fields are required.', ok: false }
+  if (next.length < 6) return { error: 'New password must be at least 6 characters.', ok: false }
+  if (next !== confirm) return { error: 'New passwords do not match.', ok: false }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email) return { error: 'Not authenticated.', ok: false }
+
+  // Re-auth with current password first
+  const { error: authErr } = await supabase.auth.signInWithPassword({ email: user.email, password: current })
+  if (authErr) return { error: 'Current password is incorrect.', ok: false }
+
+  const { error } = await supabase.auth.updateUser({ password: next })
+  if (error) return { error: error.message, ok: false }
+
   return { error: null, ok: true }
 }

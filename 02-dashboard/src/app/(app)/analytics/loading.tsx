@@ -1,0 +1,1 @@
+export default function Loading() { return <div className="grid gap-4 lg:grid-cols-2">{Array.from({ length: 3 }).map((_, index) => <div key={index} className="h-72 animate-pulse rounded-2xl border border-[var(--color-rule)] bg-white/40" />)}</div> }

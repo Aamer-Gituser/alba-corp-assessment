@@ -1,196 +1,82 @@
-# 07 · Video Script & Interview Drill
+# 07 · Task 02 walkthrough and interview preparation
 
-The brief: *"A quick video where you demo it and talk through one part you're proud
-of and one part that fought you. It's the fastest way for us to trust that you get
-how it works."*
+Record only after the verified release exists. This is a conditional beat sheet, not permission to claim unbuilt features. Speak naturally; understand each explanation rather than memorize it.
 
-That sentence is the whole assessment in miniature. The video is a **comprehension
-check**, not a product demo.
+## Four-minute walkthrough
 
----
+| Time | Screen/action | Suggested words |
+|---|---|---|
+| 0:00–0:20 | Overview after login | “This is Forecourt, a used-car inventory and preparation dashboard. It shows what each car cost to buy and prepare, and how much is left against its asking or selling price.” |
+| 0:20–0:45 | Correct KPI cards and two charts | “These totals are computed in Postgres. Stock cost basis covers unsold cars; preparation cost is all time. The monthly chart shows contribution on cars sold, before fees and overheads.” |
+| 0:45–1:30 | Open a car, add/edit a recon job, return to overview | “This job changes the vehicle's recorded cost and projected margin. I can correct its cost or category without deleting it. The same calculation feeds the detail and dashboard.” |
+| 1:30–1:50 | Modal, mobile view; profile if shipped | “Forms keep input on a failed save. On a phone, the inventory keeps the useful numbers and actions. The account settings update the dealership name shown here.” |
+| 1:50–2:45 | Diagram/view definition and corrected proof result | “Each dealership is one user in this version. Row-level policies apply even to direct API calls. The analytics view uses the caller's permissions. I test successful own-data operations as well as denied access to another user's known rows and exact aggregate totals.” |
+| 2:45–3:10 | Realtime only if verified; otherwise data correctness | “A change here updates the other tab through an authorized private channel.” OR “I kept the scope to reliable CRUD and secure server analytics; realtime was deferred.” |
+| 3:10–3:40 | One genuine issue, from actual build log | “The KPI function returned an array and I initially treated it as an object. Type assertions hid that mismatch. I fixed the response contract and checked empty and failed responses too.” Use only if this was actually fixed and understood |
+| 3:40–4:00 | README limitations/time and closing app | “The main shortcuts are one user per dealership, no receipt uploads, and the documented concurrency/data-size limits. My actual time was [recorded value]. The repo includes setup, the schema and verification evidence.” |
 
-## Part 1 — Video script (~4 min, Loom)
+Do not say a currently broken screen works. If profile, mobile or realtime does not ship, replace that beat with verified functionality. Exact times are flexible; no invented production results.
 
-Record in one take if you can. A small stumble sounds human; a polished read sounds
-rehearsed by someone who didn't build it. **Speak from the beats, don't read the
-lines.**
+## Proud point — strongest honest version
 
-### Beat 1 · What and who (0:00–0:25)
-> "This is Forecourt, an inventory dashboard for a used-car dealer. A dealer buys a
-> car at auction, spends money getting it ready to sell, then lists it. Between
-> those steps the real margin moves, and most spreadsheets lose track of it. This
-> answers three things: what's my capital tied up in, what is preparation actually
-> costing me, and did the cars I sold earn what I thought they earned."
+Use **correct data plus testable isolation**, not one magic SQL setting alone:
+“I put the calculation and ownership rules in the database, and I checked the returned values independently. The test fails on missing fixtures and API errors, and confirms the other account's rows are unchanged.”
 
-*Screen: the overview, signed in.*
+If a before/after RLS-script repair is part of the actual work, explain why accepting a null count as zero or a skipped test as PASS was wrong. This shows more understanding than simply displaying ten green lines.
 
-### Beat 2 · The data model (0:25–1:00)
-> "Two related entities. A vehicle, and the reconditioning jobs against it — one to
-> many, cascade on delete so costs can't be orphaned. Both scoped to an owner."
+Explain security_invoker precisely: default base-table access uses view-owner privileges; privileged ownership can bypass table RLS. Caller permissions avoid that problem here. Do not claim every default Postgres view always bypasses RLS.
 
-*Screen: `0001_init.sql`, scroll through the two tables.*
+## Genuine difficulty — choose from actual history
 
-> "The status field has a check constraint: a car can only be 'sold' if it has both
-> a sale price and a sale date. That's there because the margin maths silently goes
-> wrong otherwise."
+- KPI array/object mismatch visible in screenshot 1.
+- Chart fragments split across CSS grid cells.
+- Dialog success state causing reopen problems, if reproduced and fixed.
+- SQL monthly fan-out, if you can show the separate aggregation and regression fixture.
+- False-positive security proof, if corrected and rerun.
 
-### Beat 3 · Live demo (1:00–2:10)
-*Do it, don't narrate it.*
-1. Open a car → point at the cost-stack bar:
-   > "Black is what I paid, orange is what I've spent preparing it, green is what's
-   > left against the asking price. Margin is a gap you can see."
-2. Add a reconditioning job — 1,200 on bodywork
-3. Watch the stack widen, the KPI move, the category chart move
-4. Back to the list → edit a car to `sold` → the margin chart updates
+Do not use a palette-validation story unless its actual method/results are available and you understand them. Do not reconstruct a fictional difficulty after the fact.
 
-### Beat 4 · Realtime (2:10–2:35)
-*Two tabs side by side.* Edit in the left, do not touch the right.
-> "Both tables are on Supabase's replication publication, and realtime evaluates
-> RLS before it delivers — so you only ever get woken up by rows you could already
-> read."
+## Recording preparation
 
-### Beat 5 · The part I'm proud of (2:35–3:25) ← the scoring moment
-*Screen: the view definition in the SQL.*
+- Use the tested deployment/revision and consistent fixture data.
+- No passwords, tokens, email inbox, cloud secrets screens or unrelated desktop notifications.
+- Pre-open detail, schema, correct proof output and README; use readable font/zoom.
+- Demonstrate one complete workflow instead of clicking every control.
+- Keep two windows only if realtime is shipped and proven.
+- State only tests actually executed. A saved script or sample output is not a fresh test run.
+- Check Loom playback/access signed out. README/source/live links must match the recorded version.
 
-> "The analytics don't run in the browser. There's a view that computes cost basis
-> and margin per car, and three functions that aggregate for the charts — so the
-> page fetches a handful of rows instead of the whole inventory.
->
-> But here's the part I'm actually proud of. A Postgres view runs with the
-> privileges of whoever **created** it by default. So this view — the one object
-> that has every dealership's economics in it — would have bypassed row level
-> security completely and leaked all of it. It's created with
-> `security_invoker = on`, which makes it run as the caller instead, so the table
-> policies still apply.
->
-> And I didn't just assert that." *(run `npm run verify:rls`)* "This signs in as
-> dealer A with the public key a browser has, then tries to read, update and delete
-> dealer B's rows. Every one comes back empty. Row seven is the one that matters —
-> that's the view. If I'd left the default, that row would show B's numbers."
+## Interview drill — answer in your own words
 
-### Beat 6 — The part that fought me (3:25–3:50)
-**Fill this in truthfully from the build log.** Do not invent a struggle; a real
-one is obvious and a fake one is obvious.
+| Question | Substance of a good answer |
+|---|---|
+| What problem does this solve? | Preparation changes vehicle contribution; cost visibility matters before sale |
+| Why two entities? | A vehicle has many separately editable jobs; real one-to-many and meaningful aggregation |
+| Why Supabase? | SQL relationships, native RLS, Auth/Data API and brief fit; alternatives are valid |
+| What caused NaN KPIs? | Table RPC returned an array; unchecked assertion claimed object shape |
+| Why didn't TypeScript catch it? | as-casts and untyped client results can lie about runtime shape |
+| How are totals calculated? | Acquisition + all recorded jobs; sold/asking price minus basis; clearly scoped time windows |
+| Pending job versus paid cost? | Completed is work status; current model records costs without payment accounting |
+| Why zero margin isn't empty? | Sales can break even or gains/losses cancel; sales count determines activity |
+| What was monthly fan-out? | Joining two many-row sets multiplies rows; aggregate each month independently first |
+| Why is the public key public? | Identifies project access context; user JWT, grants and RLS restrict data; it is not elevated |
+| USING vs WITH CHECK? | Existing rows versus new row state; explicit checks aid clarity; absent UPDATE check reuses USING |
+| Why check child ownership on UPDATE too? | A valid own job can otherwise be moved to an unauthorized parent |
+| Why security_invoker? | Apply caller privileges/policies through the analytics view |
+| What makes the proof credible? | Known fixtures, own-operation positive controls, exact errors/results, before/after and all RPC totals |
+| Why is null mutation count insufficient? | Count may not have been requested; null says nothing about affected rows |
+| How is profile edit authorized? | Verified user ID scopes update and profile RLS enforces own row |
+| What does middleware do? | Session refresh/navigation; actions and database still need independent authorization |
+| How does realtime stay safe? | Explain actual implemented event/channel policy; acknowledge deleted-record caveat if Postgres Changes remains |
+| What happens on network failure? | Unavailable/error with preserved input; no fake empty data or false success |
+| What happens with two simultaneous editors? | Current disclosed last-writer-wins unless revision check implemented; no claim of conflict protection |
+| What breaks at scale? | Unbounded inventory/aggregate query work and event fanout; paginate/measure before inventing infrastructure |
+| What did AI do? | Describe actual assistance and your validation; don't claim sole authorship of decisions you cannot defend |
+| What would you do next? | Based on real limits: stronger concurrency, pagination, receipt access policies, team model and CI proof |
+| How long did it take? | Actual ledger, including known earlier work; disclose unknowns and overruns |
 
-Likely candidates, use whichever actually happened:
-- The first teal failed the palette validator's chroma check — it read as grey, so
-  the "margin" colour had to be re-picked against the contrast maths, not by eye
-- Getting the view to respect RLS at all (this is the genuine trap)
-- Cookie handling between middleware and Server Components
-- Making the month buckets line up when a car is bought in one month and sold in another
+## Submission and later preparation
 
-### Beat 7 · Limitations, plainly (3:50–4:10)
-> "What I left out: file storage for receipts, because it wasn't worth the time-box
-> against the three features I did build. There's no pagination — fine at twenty
-> cars, not at two thousand. And a dealership is one user right now; a real one
-> would need a team table. All of that's in the README."
+After strict verification: complete Task 02 live/repo/build-log/access links, include honest limitations and actual selected advanced features, then check every link before Submit locks the form. The brief permits a public or reviewer-shared repo and marks video optional in the form.
 
-*The brief says owning this raises the score. Say it without hedging.*
-
----
-
-## Part 2 — Interview drill
-
-I will ask these before you submit. If an answer isn't yours yet, we go back over
-that part of the code until it is.
-
-### The security boundary — most likely area of questioning
-
-**Q: What is RLS, in one sentence?**
-A predicate Postgres attaches to every query on a table, so the database itself
-decides which rows this user is allowed to see — not the application.
-
-**Q: The anon key is in the browser. Isn't that a hole?**
-No, it's public by design. It identifies the project, it doesn't authorise
-anything. Authorisation comes from the user's JWT, and RLS evaluates that per
-query. Someone can take the key and hit the REST API directly and still get only
-their own rows.
-
-**Q: So what does the middleware actually protect?**
-Nothing, security-wise. It refreshes the session cookie and redirects signed-out
-visitors — that's convenience. If you deleted it, the data would still be safe;
-you'd just get empty pages instead of a redirect.
-
-**Q: Why `security_invoker` on the view?**
-Because the default is the opposite, and the default would have leaked everything.
-A view normally executes with its creator's privileges, so RLS on the underlying
-tables doesn't apply. `security_invoker = on` makes it execute as the caller, so it
-does.
-
-**Q: You used SECURITY DEFINER on one function. Isn't that a contradiction?**
-It's the one place it's correct. The signup trigger writes a profile row before the
-new user has a session, so it can't run as them. It's pinned with
-`search_path = ''` so nothing on the caller's path can hijack the names inside it.
-
-**Q: USING versus WITH CHECK?**
-`USING` filters which existing rows an operation may touch. `WITH CHECK` validates
-what the row is allowed to become. An UPDATE needs both — without WITH CHECK a user
-could edit their own car and reassign it to someone else's `owner_id`.
-
-**Q: How do you know it works?**
-There's a script. It signs in as one dealer and tries eight breaches against the
-other's data. Output's in the README.
-
-### Architecture
-
-**Q: Why Supabase over Convex or Appwrite?**
-Mainly that the security model is ordinary Postgres, so I can show the policy, run
-a script that attacks it, and show the refusal. Convex gives realtime more cheaply
-but the data layer is proprietary — "trust the config" instead of "here's the
-predicate". Appwrite's per-document permissions are harder to reason about at a
-glance.
-
-**Q: Where does the client/server line sit?**
-Reads in Server Components, writes in Server Actions, and the only client-side
-Supabase use is the realtime socket. So the auth cookie is attached to every query
-and RLS applies everywhere by construction.
-
-**Q: Why aggregate in the database?**
-Two reasons. The payload stays flat as inventory grows — three small RPC results
-instead of every row. And the definition of "margin" lives in one place, so two
-components can't drift into disagreeing about it.
-
-**Q: Is the UI optimistic?**
-Clearly-handled rather than fully optimistic — the brief allows either. Every
-submit has a pending state and inline errors, and realtime re-renders after the
-write. A full optimistic cache on top of a realtime subscription adds
-reconciliation bugs I didn't think were worth it in a three-hour build. It's in the
-build log as a conscious trade-off.
-
-**Q: What breaks first at scale?**
-The inventory list — no pagination, no virtualisation. Around a few hundred rows
-I'd add cursor pagination. The aggregates are fine much longer because they're
-already server-side.
-
-### Product & process
-
-**Q: Why this topic?**
-Alba buys and sells used cars, so I built something for that. It also gives two
-genuinely related entities and money data worth charting, rather than a
-relationship invented to satisfy the brief.
-
-**Q: What did you cut, and why?**
-File storage for receipts. It was the fourth advanced option and I'd already done
-three; doing it badly would have cost more than leaving it out honestly.
-
-**Q: How much of this did AI write?**
-Most of the typing. The decisions are mine and I can defend each one — the schema
-shape, the constraint on sold cars, `security_invoker`, aggregating server-side,
-skipping file storage. *(Be straightforward here. The brief explicitly permits AI;
-pretending otherwise is the only wrong answer.)*
-
-**Q: What would you do next?**
-Receipts in storage with a bucket policy mirroring the RLS rules, a dealerships
-table so a lot can have staff, cursor pagination, and promoting the RLS script into
-CI so the boundary is re-proven on every push.
-
----
-
-## Recording checklist
-
-- [ ] Seeded data present, so charts aren't empty
-- [ ] Two browser windows pre-arranged for the realtime beat
-- [ ] Terminal ready on the `verify:rls` command
-- [ ] SQL file open at the view definition
-- [ ] Notifications off, clean desktop
-- [ ] Loom sharing set to anyone-with-link, then tested in incognito
+For interview preparation after submission, pin the submitted revision and keep examples from it. Rehearse the workflow, architecture diagram, KPI fix, one security test and trade-offs without reading. Post-submission improvements must not be described as features of the submitted revision.

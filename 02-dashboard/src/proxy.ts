@@ -7,10 +7,10 @@ const PUBLIC_ROUTES = ['/login', '/auth']
  * Refreshes the Supabase session on every request and gates the app routes.
  *
  * The redirect here is convenience, not security — RLS is what actually stops
- * one dealer reading another's rows. Someone who skipped this middleware
- * entirely would still get nothing back from Postgres.
+ * one dealer reading another's rows. Someone who skipped this proxy entirely
+ * would still get nothing back from Postgres.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient(

@@ -1,100 +1,101 @@
-# 03 · Architecture
+# 03 · Architecture and behavior contracts
 
-Satisfies brief doc requirement C1 (backend choice) and the Technical Judgment
-dimension. This is the file to re-read before the interview.
+Keep the current small architecture. The improvement is explicit contracts and safe failure behavior, not more infrastructure.
 
----
-
-## 1. Where the client/server line sits
-
-```
-Browser                          Vercel (Next.js)                 Supabase
-───────                          ────────────────                 ────────
-                                 middleware.ts
-  request ───────────────────▶   refresh session cookie
-                                 redirect if signed out
-                                        │
-                                 Server Component
-                                 createClient() bound  ──────────▶  Postgres
-                                 to request cookies                 RLS evaluates
-                                        │                           auth.uid()
-  HTML (already has data) ◀──────  render                ◀──────── only own rows
-                                        
-  form submit ──────────────▶   Server Action
-                                 validate with zod
-                                 supabase.insert() ────────────▶   RLS re-checks
-                                 revalidatePath()                  WITH CHECK
-  updated HTML ◀─────────────         │
-
-  Realtime socket ◀──────────────────────────────────────────────  replication
-  router.refresh()                                                 (RLS filtered)
+```mermaid
+flowchart LR
+    B[Browser: forms, charts, navigation] --> N[Next.js: verified user, Server Actions, Server Components]
+    N --> S[Supabase Auth and Data API]
+    S --> P[(Postgres: RLS, constraints, view, RPCs)]
+    P --> S
+    S --> N
+    N --> B
+    R[Optional private realtime event] --> B
 ```
 
-**Reads** happen in Server Components. **Writes** happen in Server Actions.
-**The only client-side Supabase usage is the Realtime subscription.**
+## Decisions and trade-offs
 
-## 2. Why Supabase
+| Decision | Chosen approach | Alternative/trade-off |
+|---|---|---|
+| Backend | Supabase SQL/Auth | Convex/Appwrite valid; SQL matches this schema and aggregation |
+| Reads | Request-scoped Server Components/client; parallel independent queries | Client query cache adds complexity not needed here |
+| Writes | Server Actions with validation, verified identity and DB RLS | Route handlers add an API layer without a current consumer |
+| Feedback | Explicit pending/result/error; preserve input | Full optimistic CRUD risks reconciliation and false success |
+| Analytics | Caller-scoped view + three RPCs | Client summation downloads rows and duplicates business definitions |
+| Types | Generated Database type where available + focused runtime validation | Existing unchecked casts concealed the KPI bug |
+| Account | profiles is source of display/dealership names | Duplicating editable names in auth metadata risks stale header values |
+| Scale | Small dataset; bounded list or honest cap | Cursor pagination is later, not an unlimited-load promise |
 
-| Candidate | Verdict |
+Do not describe Recharts as small without measurement. Do not promise flat database work just because aggregate response payload is small.
+
+## Read boundary
+
+Create focused getOverview/getInventory/getVehicle functions only where they remove duplicated parsing/error handling. They use a fresh cookie-bound public-key client for each request; no service-role client in runtime code.
+
+For dashboard_stats, request .single() then validate the response. A missing field/row or nonfinite value is a contract error. Return typed data or a deliberate error, never an as-cast and hope.
+
+Check every Supabase error. If an analytics panel fails, show that panel unavailable with Retry while retaining separately successful panels; a simpler route-level retry is acceptable. Missing/forbidden vehicle with a successful query becomes notFound; backend failure does not. A genuinely empty account shows actions, never an indefinite skeleton.
+
+Private HTML/data/session responses must not enter shared ISR/CDN caches. Never cache user-bound query results globally without an explicit user key. Keep authorization on direct action entry points, not only layout/middleware.
+
+## Mutation contract
+
+1. Verify identity with getUser (current approach) or verified claims as appropriate; never trust an unvalidated cookie payload.
+2. Parse allowlisted business fields, UUIDs, strict money and dates. Reject blank required amounts and unexpected identities.
+3. Perform operation as the user. For update/delete, request returned rows or an exact count and require the intended affected row.
+4. Map known validation/constraint errors to field/action messages; unexpected server diagnostics stay in redacted server logs.
+5. Revalidate overview, inventory and affected detail after cost/status changes. Derive affected vehicle from returned job data, not only a hidden caller field.
+6. Return one serializable result shape: success, fieldErrors, formError and optional recordId. Close/redirect only after actual success.
+
+Pending buttons prevent accidental double submit; they are not a database idempotency guarantee. Do not automatically retry an uncertain POST and duplicate a car/job. Explain “Save status unknown; check inventory before retrying” if necessary.
+
+Add updateReconJob for all editable fields. Completion sends a desired boolean, not a claimed atomic toggle. Existing last-writer-wins is acceptable if disclosed; warn that a second tab's stale form can overwrite changes. Version checks are future work unless time remains.
+
+Move EMPTY_FORM_STATE out of the file-wide use-server module. Reuse a lightweight dialog and field-error primitive; avoid introducing a form/state framework solely for these fixes.
+
+## Profile editing — user-requested
+
+Route /settings, linked from an account menu in the header. Fields: display name, dealership name; email read-only. No avatar upload, role editor, team management or email-change promise.
+
+Server action ignores submitted user ID: verified user.id scopes profiles.update(...).eq('id', user.id).select(...).single(). Validate display name 2–80, dealership 2–100 trimmed characters. RLS remains the cross-user boundary. Missing profile is an explicit provisioning error, not a silent saved state.
+
+Save/Cancel, dirty-state indication, pending lock, inline error and success notice; do not disable Cancel forever after failure. Revalidate app layout so the header updates immediately. Confirm reload and a second login retain the change. Keep profile data separate from access-control claims.
+
+## Login/session quality
+
+- Keep email/password sign-in. Add show/hide password with accessible pressed state and clear labels.
+- Separate keyed sign-in/sign-up form instances so password/defaults/error state cannot leak across modes.
+- Demo-access guidance must match actual setup; remove claims that blank fields are prefilled.
+- Usernames/passwords for proof/seed come from one local env convention. No password in browser-prefixed env or source.
+- Wrong credentials use a generic message; network/service outage and rate limit need useful distinct retry guidance without account enumeration.
+- If public signup stays visible, verify email-confirmation-on and -off outcomes and the actual callback route. Otherwise hide signup and use preconfirmed reviewer users; do not ship a dead flow.
+- Password reset is optional beyond the brief. Add a link only alongside a tested email/callback/new-password flow. For this time-box, profile names are more valuable than speculative OAuth/2FA.
+- Preserve refreshed cookies when returning redirects; getUser currently verifies via Auth and is valid. The middleware→proxy rename is maintenance, not proof of a current auth bypass.
+- Authenticated layout and actions independently check user. Support only allowlisted relative return paths; never redirect to arbitrary user-supplied URLs.
+- Handle sign-out failure and clear private view state; verify expiry, sign-out/back navigation and A→B switching.
+
+## Realtime retention decision
+
+Current wildcard Postgres Changes subscriptions refresh on every event. Supabase's deleted-record delivery has different authorization semantics; an owner filter in this client is not itself a security boundary against another subscriber. A green Live label proves subscription state, not correct/successful data refresh.
+
+**Core-safe fallback:** remove subscription and these tables from the publication if dropping realtime. Keep explicit mutation revalidation and manual refresh. Do not leave an exposed event surface while only hiding its badge.
+
+**If retaining within budget:** use owner-scoped private Broadcast channels for insert/update/delete. Trigger chooses topic from actual NEW/OLD owner, not browser input; client receive policy allows only topic matching auth.uid(), and client send is denied unless required. Minimize event payload to an invalidation signal. Lock down helper privileges/search_path. Remove unneeded base-table Postgres Changes publication entries without changing unrelated tables.
+
+Use 200–300ms coalescing of event refreshes, refresh once after reconnection, cleanup on unmount/sign-out, resubscribe after identity change. Do not discard dirty forms. Indicate Connecting / Live / Reconnecting / Unavailable; preserve last data and expose Refresh. Prove A cannot join B's topic, including malicious direct subscriptions and deletes.
+
+This is more work than the current subscriber: cut realtime before compromising core delivery. Guidance: [Broadcast database events](https://supabase.com/docs/guides/realtime/subscribing-to-database-changes), [channel authorization](https://supabase.com/docs/guides/realtime/authorization).
+
+## Failure contract
+
+| Condition | Visible outcome |
 |---|---|
-| **Supabase** ✅ | The brief names it as their recommended pick "if you want to show off SQL and row-level security". Decisive factor: the security boundary is *demonstrable* — RLS is ordinary Postgres, so I can show the policy, run a script that tries to breach it, and paste the refusal. It also gives auth, realtime and RPC without adding a service |
-| Convex | Realtime is cheaper out of the box and the function model is pleasant, but the data layer is proprietary. The thing this task rewards most — a security boundary you can prove in SQL — would have become "trust the permission config" |
-| Appwrite | All-in-one and fine, but its document permissions are per-document metadata rather than a predicate on the table. Harder to reason about, harder to prove, and less to show |
-
-## 3. Why the security boundary is in the database, not the app
-
-The browser holds the **public anon key** — that is by design, it is meant to be
-public. So the honest question is: *what stops someone opening devtools, taking
-that key, and calling the REST API directly?*
-
-The answer must not be "the UI doesn't have a button for it". It is: **RLS**.
-Every policy is a predicate Postgres applies to the query itself. A hand-rolled
-`curl` with a valid session for dealer A returns dealer A's rows and nothing else.
-Remove the middleware, bypass the UI entirely — the answer doesn't change.
-
-This is why the middleware's redirect is described in its own comment as
-*convenience, not security*.
-
-## 4. Key decisions and the alternatives considered
-
-| Decision | Chosen | Alternative | Why |
-|---|---|---|---|
-| Where aggregation runs | Postgres view + RPC | Fetch rows, sum in React | The brief offers "server-computed analytics" as an advanced option, and it's the right call anyway: payload stays flat as inventory grows, and the margin definition lives in one place instead of being re-implemented per component |
-| View security | `security_invoker = on` | Default (definer) | Default would silently bypass RLS and leak every dealership's economics through the analytics view. This is the single highest-value line in the migration |
-| Mutations | Server Actions | Route handlers + fetch | Fewer moving parts, no hand-written API surface, and `revalidatePath` keeps the server-rendered page truthful after a write |
-| Feedback on write | `useActionState` pending + inline errors | Full optimistic cache | The brief allows "optimistic **or** clearly-handled". With realtime already re-rendering, a full optimistic layer would add reconciliation bugs for no visible gain in a 3-hour build. Documented as a conscious trade-off |
-| `owner_id` | DB default `auth.uid()` | Set it client-side | The client never gets to name an owner. Even a malicious payload can't forge one, because the INSERT policy re-checks it |
-| Validation | zod in the Server Action, mirroring the DB CHECKs | Trust the database | The DB is the real guarantee; zod exists to turn a Postgres constraint violation into a sentence a human can act on |
-| Type safety | Hand-written row types | `supabase gen types` | Generating requires the CLI logged into the project. Hand-written types are small here and keep setup-from-zero to one SQL paste |
-
-## 5. Failure behaviour
-
-| Failure | Behaviour |
-|---|---|
-| Not signed in | Middleware redirects to `/login` before any data call |
-| Session expired mid-session | Middleware refreshes the cookie; if refresh fails, redirect to login |
-| Validation failure | Inline message above the submit button; form keeps its values |
-| Constraint violation (e.g. sold car with no sale date) | Caught by zod first with a readable message; the DB CHECK is the backstop |
-| Supabase unreachable | Route-level `error.tsx` with a retry action — never a blank screen |
-| Realtime socket drops | Header indicator flips to "Offline"; the page still works, it just stops auto-refreshing |
-| Empty account | Every list and chart has an empty state written as a next action, not "No data" |
-
-## 6. Performance notes
-
-- Server Components mean no client-side fetch waterfall; HTML arrives with data.
-- Three RPC calls for the whole overview instead of downloading the inventory.
-- Composite indexes lead with `owner_id` so the RLS predicate and the query
-  predicate share one index.
-- `auth.uid()` wrapped in a scalar subquery → one InitPlan per statement rather
-  than a function call per row.
-- Fonts via `next/font` (self-hosted, `display: swap`) — no render-blocking
-  third-party CSS, no layout shift.
-
-## 7. What I would do next with more time
-
-1. File storage for purchase invoices and recon receipts, with a per-owner bucket
-   policy mirroring the RLS rules.
-2. Cursor pagination + a windowed list once inventory passes a few hundred cars.
-3. Playwright coverage of the CRUD paths, and the RLS proof promoted into CI.
-4. A `dealerships` table so several users can share one lot — today a dealership
-   is a single user, which is the main simplification in the model.
+| Pending read | Geometry-matched skeleton, not fake data |
+| Empty success | Useful next action; KPI empty semantics |
+| Failed query | Unavailable/Retry, no fake zero or no-stock claim |
+| Invalid form | Preserve values, field errors and focused summary |
+| Zero-row update/delete | Record missing/no longer editable; no success |
+| Deletion with jobs | Named confirmation with child count; success navigates away |
+| Lost socket | Last data + reconnect state; ordinary reads/writes still determine success |
+| Auth expired | Session-expired login route; no stale tenant data |
+| Unexpected error | Safe message/digest; never assert “data is safe, display issue” without evidence |

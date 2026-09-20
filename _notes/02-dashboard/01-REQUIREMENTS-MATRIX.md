@@ -1,65 +1,57 @@
-# 01 · Requirements Matrix — every box the brief asks for
+# 01 · Task 02 requirements and evidence
 
-Nothing ships until every row has evidence. "Evidence" means a thing a reviewer can
-click, run, or read — not an assertion.
+Use planned / implemented-unverified / pass / fail / blocked / excluded. Existing code is not a pass. Record revision/date/environment in [09](09-EXECUTION-AND-EVIDENCE.md).
 
----
+## Official core requirements
 
-## A. Core requirements (all mandatory)
-
-| # | Brief wording | How it's met | Evidence a reviewer can check |
+| ID | Requirement | Current assessment | Acceptance evidence |
 |---|---|---|---|
-| A1 | **Full CRUD** on main entities with optimistic or clearly-handled UI feedback | Vehicles: create / edit / delete. Reconditioning jobs: create / toggle complete / delete. Server Actions with `useActionState`; every submit shows a pending state; validation failures render inline above the button | Add, edit and delete a car live on the deployed URL |
-| A2 | **Charts and data viz** — at least two, meaningful not decorative | Three: (1) margin realised by month (2) reconditioning spend by category (3) vehicles bought vs sold by month | Overview screen |
-| A3 | **A beautiful, fluid UI** — smooth list/detail transitions, thoughtful empty and loading states, responsive | Custom design system (04), route-level skeletons, empty states written as next actions, mobile layout at 375px | Resize the window; visit with an empty account |
-| A4 | **The backend doing real work** — data in the BaaS, real tables/relationships/queries | Postgres: 3 tables, 2 enums, FK with cascade, CHECK constraints, 4 indexes, 1 view, 3 RPC functions | `supabase/migrations/0001_init.sql`; Supabase table editor |
-| A5 | **Docs that include the data model** — full schema, buckets, functions, config to stand it up from scratch | README: schema table per table, Mermaid ER diagram, RPC list, "no buckets used" stated, full provisioning steps | README.md |
+| C1 | Full CRUD with feedback | Vehicles exist; job fields cannot be edited; deletes/toggles hide failures | Both entities create/read/edit/delete, reload, pending/error/success and zero-row checks |
+| C2 | At least two useful visualisations | Three charts exist; grid broken and zero-value states misleading | Exact monthly/category fixtures; titled panels with table alternatives |
+| C3 | Beautiful fluid UI, states, responsive | Coherent identity; misplaced dialogs; mobile/smoothness unverified | 375/768/1440px, keyboard CRUD, reduced motion and stable loading |
+| C4 | Backend does real work | Relational tables, view and RPCs exist; KPI response mishandled | Persisted mutations, exact totals, independent A/B data |
+| C5 | Schema/services/setup docs | Docs exist with stale claims | Complete schema and clean setup reproduced |
 
-## B. Advanced options — brief requires ≥1 on top of auth
+## Advanced options — authentication is baseline
 
-| # | Option | Status | Evidence |
+| ID | Option | Decision | Gate |
 |---|---|---|---|
-| B1 | **Secure, isolated data** — "prove that user A can't read user B's rows" | ✅ | `npm run verify:rls` — signs in as dealer A, attempts SELECT / UPDATE / DELETE against dealer B's rows, prints each refusal. Output pasted in README |
-| B2 | **Real-time updates** — two tabs, edit one, watch the other | ✅ | Live indicator in header; demo in the video |
-| B3 | **Server-computed analytics** — aggregation in DB, not the browser | ✅ | `vehicle_economics` view + `dashboard_stats()`, `monthly_performance()`, `recon_by_category()`. Network tab shows small aggregate payloads, not raw inventory |
-| B4 | File storage | ❌ Skipped | Declared in README Known Limitations with the reason |
+| X1 | Secure isolated data | Core target, not certified | Corrected proof, own-row positive controls, anonymous/A/B queries, child ownership and all RPCs |
+| X2 | Server analytics | Core target, implemented-unverified | Exact independent expected totals and single-row stats contract |
+| X3 | Realtime | Conditional retention | Same-user insert/update/delete, other-user event isolation, reconnect and draft preservation |
+| X4 | File storage | Excluded | Explicit no-bucket declaration; no upload claims |
 
-## C. Documentation requirements (6)
+Auth + X1 + X2 matches the recommended combination. A Live badge alone does not prove X3.
 
-| # | Brief wording | Where it lives |
-|---|---|---|
-| C1 | Backend choice — and why | README § Why Supabase (with the alternatives considered) |
-| C2 | Full schema — "a diagram is a nice touch" | README § Data model — table specs + Mermaid ER diagram |
-| C3 | Services used — buckets / functions / services | README § Services — Auth, Postgres, Realtime, RPC; explicitly no storage buckets |
-| C4 | Advanced feature + **how it was verified**, especially the RLS security boundary | README § Proving the boundary holds — the script, the method, the real output |
-| C5 | Setup from zero — run locally + provision backend | README § Setup from zero — 6 numbered steps, copy-pasteable |
-| C6 | **A way in** — seeded data or one-command seed + test credentials | README § A way in — `npm run seed` and two logins printed at the top of the README |
+## Six documentation requirements
 
-## D. Hand-ins (4)
+| Section | Content |
+|---|---|
+| Backend choice | Why Supabase, fair alternatives and limitations |
+| Full schema | Fields/types/defaults, relationships, checks, indexes, policies, view, RPCs, triggers and diagram |
+| Services | Auth/Postgres/Data API; Realtime if retained; no Storage/Edge Functions |
+| Verification | Executable proof and redacted actual results; pass/fail/skip/blocked distinguished |
+| Setup from zero | Runtime/lockfile, ordered migrations, environment, users, seed, start and deploy |
+| Way in | Seeded data and working test credentials privately in submission notes/access attachment; README points there |
 
-| # | Item | Plan |
-|---|---|---|
-| D1 | Live URL on Vercel | Deployed in phase D; verified in a fresh incognito window |
-| D2 | Source repo with clear README | `02-dashboard/` in the assessment repo, public |
-| D3 | BUILD_LOG.md — 7 sections, written *during* the work | Template pre-created; filled at each phase gate, not reconstructed |
-| D4 | Video walkthrough — demo + one part proud of + one part that fought you | Script in 07; recorded on Loom |
+No actual password in source or NEXT_PUBLIC variables. A privately supplied login preserves both reviewer access and the brief's no-live-credentials-in-repo rule.
 
-## E. Hard rules
+## Submission and process
 
-| # | Rule | Control |
-|---|---|---|
-| E1 | **Never commit real secrets** — "an instant red flag" | `.gitignore` covers `.env*` before the first commit; `.env.example` holds placeholders only; secret-scan step in the pre-submit ritual (05) |
-| E2 | Folder stands on its own — README, build log, `.env.example`, run instructions | All four present in `02-dashboard/` |
-| E3 | Honest clock | Real timings recorded per phase in BUILD_LOG § Time spent |
-| E4 | Own limitations | README § Known limitations lists skipped file storage, no pagination, no dark mode, single-user dealerships |
-| E5 | Submission locks on submit | Pre-submit ritual (05) run in full before pressing Submit |
+- Live URL; source public OR explicitly shared with reviewer.
+- Standalone README, BUILD_LOG with the seven official headings, placeholder .env.example, run instructions.
+- Contemporary log entries and actual elapsed time; disclose unknown history and overruns.
+- Video is requested by the hand-in narrative but labelled optional by the form. We plan one; its four-minute length is our own choice.
+- Check links/access before user submission; the form locks.
+- Known limitations must describe actual shortcuts; never fabricate passes, timings or struggles.
 
-## F. Self-imposed quality bar (not required, but where the 50% lives)
+## User-requested improvements
 
-| # | Bar | Why |
-|---|---|---|
-| F1 | No dual-axis charts | Two y-scales invent a correlation that isn't in the data. Volume gets its own chart rather than riding on the margin axis |
-| F2 | Categorical palette validated by script, not by eye | First teal failed the chroma floor; replacement passes all six checks (ΔE 9.8 protan) |
-| F3 | Every chart has a table view | Colour is never the only channel carrying a value |
-| F4 | Keyboard focus visible, `prefers-reduced-motion` respected | Accessibility is named in the brief's "good practices" |
-| F5 | Money in tabular figures only where digits align in columns | Hero numbers use proportional figures — tabular at display size reads loose |
+| Feature | Acceptance |
+|---|---|
+| Profile edit | Own display/dealership names, read-only email, validation, save/cancel/error/pending, header refresh and persistence; cross-user update denied |
+| Smooth UI | Centered reusable dialogs, one chart/card, bounded motion, draft preservation, no replay on each realtime refresh |
+| Inventory utilities | Search make/model, allowlisted sort/status, counts, clear filters; preserve state on return |
+| Login quality | Password visibility, separate mode state, accurate access guidance, safe return path, network/session errors handled |
+
+These improve the product but cannot replace core correctness, deployment or security evidence.

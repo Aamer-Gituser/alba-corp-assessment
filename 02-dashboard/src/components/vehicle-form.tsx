@@ -6,9 +6,8 @@ import {
   createVehicle,
   updateVehicle,
   deleteVehicle,
-  EMPTY_FORM_STATE,
-  type FormState,
 } from '@/app/(app)/actions'
+import { EMPTY_FORM_STATE, type FormState } from '@/lib/form-state'
 
 const STATUSES: { value: VehicleStatus; label: string }[] = [
   { value: 'sourcing',       label: 'Sourcing' },
@@ -17,13 +16,8 @@ const STATUSES: { value: VehicleStatus; label: string }[] = [
   { value: 'sold',           label: 'Sold' },
 ]
 
-const cls =
-  'w-full rounded-xl px-3.5 py-2.5 text-[13px] transition-all outline-none focus:ring-2 focus:ring-[#3B82F6]/40 focus:border-[#3B82F6]'
-const clsStyle = {
-  background: 'oklch(1 0 0 / 0.04)',
-  border: '1px solid oklch(1 0 0 / 0.10)',
-  color: 'var(--color-ink)',
-}
+const cls = 'field'
+const clsStyle = {}
 
 function VehicleForm({
   initial,
@@ -71,7 +65,7 @@ function VehicleForm({
           style={clsStyle}
         >
           {STATUSES.map((s) => (
-            <option key={s.value} value={s.value} style={{ background: '#0D1525' }}>
+            <option key={s.value} value={s.value}>
               {s.label}
             </option>
           ))}
@@ -99,12 +93,7 @@ function VehicleForm({
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-xl py-2.5 text-[13px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
-        style={{ background: 'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%)', color: '#fff', fontFamily: 'var(--font-display)' }}
-      >
+      <button type="submit" disabled={pending} className="primary-action w-full justify-center py-2.5 disabled:opacity-50">
         {pending ? 'Saving…' : initial?.id ? 'Save changes' : 'Add vehicle'}
       </button>
     </form>
@@ -193,13 +182,7 @@ function GlassDialog({
       <dialog
         ref={ref}
         onClose={close}
-        className="m-auto w-full max-w-lg rounded-3xl p-0 shadow-2xl"
-        style={{
-          background: '#0D1525',
-          border: '1px solid oklch(1 0 0 / 0.12)',
-          boxShadow: '0 32px 80px 0 oklch(0 0 0 / 0.6)',
-          color: 'var(--color-ink)',
-        }}
+        className="glass-modal m-auto w-full max-w-lg rounded-[var(--radius-card)] p-0"
       >
         <div className="p-6">
           <div className="mb-5 flex items-center justify-between">
@@ -209,8 +192,8 @@ function GlassDialog({
             <button
               onClick={close}
               aria-label="Close"
-              className="flex size-7 items-center justify-center rounded-lg text-[12px] transition-colors hover:bg-white/10"
-              style={{ color: 'var(--color-ink-faint)' }}
+              className="flex size-7 items-center justify-center rounded-lg text-[12px] transition-colors"
+              style={{ color: 'var(--color-ink-faint)', background: 'oklch(0 0 0 / 5%)' }}
             >
               ✕
             </button>
@@ -227,12 +210,7 @@ export function AddVehicleDialog() {
     <GlassDialog
       title="Add vehicle"
       trigger={
-        <button
-          className="rounded-xl px-4 py-2 text-[13px] font-semibold transition-opacity hover:opacity-90"
-          style={{ background: 'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%)', color: '#fff', fontFamily: 'var(--font-display)' }}
-        >
-          + Add vehicle
-        </button>
+        <button className="primary-action">+ Add vehicle</button>
       }
     >
       {(close) => <VehicleForm action={createVehicle} onSuccess={close} />}
@@ -245,12 +223,7 @@ export function EditVehicleDialog({ vehicle }: { vehicle: VehicleEconomics }) {
     <GlassDialog
       title="Edit vehicle"
       trigger={
-        <button
-          className="rounded-xl px-4 py-2 text-[13px] font-medium transition-colors hover:bg-white/5"
-          style={{ border: '1px solid oklch(1 0 0 / 0.12)', color: 'var(--color-ink)', background: 'oklch(1 0 0 / 0.04)' }}
-        >
-          Edit
-        </button>
+        <button className="rounded-lg border px-3 py-1.5 text-[12.5px] font-medium transition-colors hover:bg-white/60" style={{ borderColor: 'var(--color-rule)', color: 'var(--color-ink-soft)' }}>Edit</button>
       }
     >
       {(close) => <VehicleForm initial={vehicle} action={updateVehicle} onSuccess={close} />}
@@ -264,11 +237,7 @@ export function DeleteVehicleButton({ vehicleId }: { vehicleId: string }) {
 
   if (!confirmed) {
     return (
-      <button
-        onClick={() => setConfirmed(true)}
-        className="rounded-xl px-4 py-2 text-[13px] font-medium transition-colors"
-        style={{ border: '1px solid oklch(0.63 0.22 25 / 0.3)', color: 'var(--color-signal-text)', background: 'var(--color-signal-wash)' }}
-      >
+      <button onClick={() => setConfirmed(true)} className="rounded-lg border px-3 py-1.5 text-[12.5px] font-medium transition-colors" style={{ borderColor: 'oklch(0.63 0.22 25 / 0.3)', color: 'var(--color-signal-text)', background: 'var(--color-signal-wash)' }}>
         Delete
       </button>
     )

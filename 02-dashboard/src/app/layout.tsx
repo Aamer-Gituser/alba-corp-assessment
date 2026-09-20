@@ -1,24 +1,16 @@
 import type { Metadata } from 'next'
-import { Sora, Inter_Tight, JetBrains_Mono } from 'next/font/google'
+import { Geist, IBM_Plex_Mono } from 'next/font/google'
 import './globals.css'
 
-const sora = Sora({
+const geist = Geist({
   subsets: ['latin'],
-  variable: '--font-sora',
-  weight: ['400', '600', '700', '800'],
+  variable: '--font-geist',
   display: 'swap',
 })
 
-const interTight = Inter_Tight({
+const ibmMono = IBM_Plex_Mono({
   subsets: ['latin'],
-  variable: '--font-inter-tight',
-  weight: ['400', '500', '600'],
-  display: 'swap',
-})
-
-const jetbrains = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-jetbrains',
+  variable: '--font-ibm-mono',
   weight: ['400', '500', '600'],
   display: 'swap',
 })
@@ -34,7 +26,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${sora.variable} ${interTight.variable} ${jetbrains.variable}`}>
+      <body className={`${geist.variable} ${ibmMono.variable}`}>
         {children}
       </body>
     </html>

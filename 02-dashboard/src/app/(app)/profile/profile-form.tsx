@@ -1,14 +1,11 @@
 'use client'
 
 import { useActionState } from 'react'
-import { updateProfile, EMPTY_FORM_STATE } from '@/app/(app)/actions'
+import { updateProfile } from '@/app/(app)/actions'
+import { EMPTY_FORM_STATE } from '@/lib/form-state'
 
-const cls = 'w-full rounded-xl px-3.5 py-2.5 text-[13px] outline-none transition-all focus:ring-2 focus:ring-[#3B82F6]/40'
-const clsStyle = {
-  background: 'oklch(1 0 0 / 0.04)',
-  border: '1px solid oklch(1 0 0 / 0.10)',
-  color: 'var(--color-ink)',
-}
+const cls = 'field'
+const clsStyle = {}
 
 export function ProfileForm({ initial }: { initial: { dealership_name: string } }) {
   const [state, formAction, pending] = useActionState(updateProfile, EMPTY_FORM_STATE)
@@ -34,12 +31,7 @@ export function ProfileForm({ initial }: { initial: { dealership_name: string } 
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-xl py-2.5 text-[13px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
-        style={{ background: 'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%)', color: '#fff', fontFamily: 'var(--font-display)' }}
-      >
+      <button type="submit" disabled={pending} className="primary-action w-full justify-center py-2.5 disabled:opacity-50">
         {pending ? 'Saving…' : 'Save changes'}
       </button>
     </form>

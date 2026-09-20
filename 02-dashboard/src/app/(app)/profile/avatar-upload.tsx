@@ -2,7 +2,8 @@
 
 import { useActionState, useRef, useState } from 'react'
 import Image from 'next/image'
-import { uploadAvatar, EMPTY_FORM_STATE } from '@/app/(app)/actions'
+import { uploadAvatar } from '@/app/(app)/actions'
+import { EMPTY_FORM_STATE } from '@/lib/form-state'
 
 export function AvatarUpload({ currentUrl }: { currentUrl: string | null }) {
   const [state, formAction, pending] = useActionState(uploadAvatar, EMPTY_FORM_STATE)
@@ -18,14 +19,7 @@ export function AvatarUpload({ currentUrl }: { currentUrl: string | null }) {
   }
 
   return (
-    <div
-      className="rounded-2xl p-6"
-      style={{
-        background: 'var(--color-glass)',
-        border: '1px solid var(--color-rule)',
-        boxShadow: 'inset 0 1px 0 0 oklch(1 0 0 / 0.07)',
-      }}
-    >
+    <div className="glass-panel p-6">
       <p className="eyebrow mb-4">Logo / photo</p>
 
       <form action={formAction} className="flex items-center gap-5">
@@ -67,12 +61,7 @@ export function AvatarUpload({ currentUrl }: { currentUrl: string | null }) {
             </p>
           )}
           {preview && (
-            <button
-              type="submit"
-              disabled={pending}
-              className="mt-3 rounded-xl px-3.5 py-1.5 text-[12.5px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
-              style={{ background: 'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%)', color: '#fff', fontFamily: 'var(--font-display)' }}
-            >
+            <button type="submit" disabled={pending} className="primary-action mt-3 py-1.5 disabled:opacity-50">
               {pending ? 'Uploading…' : 'Save photo'}
             </button>
           )}

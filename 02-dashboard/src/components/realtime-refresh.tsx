@@ -35,16 +35,5 @@ export function RealtimeRefresh() {
     }
   }, [router])
 
-  return (
-    <span
-      className="flex items-center gap-1.5 text-[11.5px] text-ink-faint"
-      title={live ? 'Changes from other sessions appear automatically' : 'Reconnecting'}
-    >
-      <span
-        aria-hidden
-        className={`inline-block size-1.5 rounded-full ${live ? 'bg-margin' : 'bg-ink-faint'}`}
-      />
-      {live ? 'Live' : 'Offline'}
-    </span>
-  )
+  return <span aria-hidden className="sr-only" data-live={live} />
 }
