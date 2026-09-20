@@ -8,6 +8,13 @@ build/
 next-env.d.ts
 .claude/
 
+# Internal working notes — not for reviewers
+_notes/
+docs/plans/
+**/AGENTS.md
+**/CLAUDE.md
+**/VIDEO_SCRIPT.md
+
 # Environment files — never commit real secrets
 .env
 .env.local
