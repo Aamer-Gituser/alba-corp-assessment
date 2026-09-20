@@ -227,6 +227,20 @@ async function main() {
   const { data: bVehicles } = await supabase.from('vehicles').insert(vehiclesB).select('id')
   console.log(`  Inserted ${bVehicles?.length} vehicles for Rashid Auto (RLS boundary)`)
 
+  // One recon job for B — needed so verify:rls test 9 (cross-owner vehicle_id attack) actually runs
+  if (bVehicles?.[0]?.id) {
+    await supabase.from('reconditioning_jobs').insert([{
+      owner_id: ownerB,
+      vehicle_id: bVehicles[0].id,
+      category: 'mechanical',
+      description: 'Oil service',
+      cost: 800,
+      vendor: null,
+      completed: true,
+      performed_on: monthsAgo(1),
+    }])
+  }
+
   console.log('\n✅ Seed complete.')
   console.log(`   Marina Motors: ${DEALER_A.email} / ${DEALER_A.password}`)
   console.log(`   Rashid Auto:   ${DEALER_B.email} / ${DEALER_B.password}`)

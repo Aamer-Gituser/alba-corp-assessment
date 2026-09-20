@@ -20,7 +20,7 @@ async function getOverviewData() {
   ])
 
   return {
-    stats: (statsRes.data as DashboardStats | null) ?? null,
+    stats: (Array.isArray(statsRes.data) ? (statsRes.data as DashboardStats[])[0] : null) ?? null,
     monthly: (monthlyRes.data as MonthlyPerformance[] | null) ?? [],
     recon: (reconRes.data as ReconByCategory[] | null) ?? [],
     attention: (attentionRes.data as VehicleEconomics[] | null) ?? [],

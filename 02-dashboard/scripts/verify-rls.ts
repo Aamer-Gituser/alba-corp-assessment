@@ -40,10 +40,15 @@ function fail(id: number, test: string, detail = '') {
 async function main() {
   console.log('Forecourt RLS verification\n')
 
+  // Accounts must match seed.ts constants
+  const EMAIL_A = process.env.SEED_EMAIL_A ?? 'appflow.qa01@gmail.com'
+  const EMAIL_B = process.env.SEED_EMAIL_B ?? 'appflow.qa02@gmail.com'
+  const PASSWORD = process.env.SEED_PASSWORD ?? 'forecourt-demo'
+
   // ── Get Dealer B's IDs ────────────────────────────────────────────────────
   const { data: list } = await service.auth.admin.listUsers()
-  const b = list?.users?.find((u) => u.email === 'rival@forecourt.test')
-  if (!b) { console.error('Dealer B not found — run npm run seed first'); process.exit(1) }
+  const b = list?.users?.find((u) => u.email === EMAIL_B)
+  if (!b) { console.error(`Dealer B (${EMAIL_B}) not found — run npm run seed first`); process.exit(1) }
 
   const { data: bVehicles } = await service
     .from('vehicles')
@@ -60,13 +65,20 @@ async function main() {
     .eq('owner_id', b.id)
     .limit(1)
 
+  // ── Snapshot B's recon_total BEFORE any attacks ───────────────────────────
+  const beforeBEcon = await service
+    .from('vehicle_economics')
+    .select('recon_total')
+    .eq('id', bCarId)
+    .maybeSingle()
+
   // ── Sign in as Dealer A (anon key — exactly what a browser has) ───────────
   const anon = createClient(url, anonKey)
   const { error: signInErr } = await anon.auth.signInWithPassword({
-    email: 'demo@forecourt.test',
-    password: 'forecourt-demo',
+    email: EMAIL_A,
+    password: PASSWORD,
   })
-  if (signInErr) { console.error('Could not sign in as Dealer A:', signInErr.message); process.exit(1) }
+  if (signInErr) { console.error(`Could not sign in as Dealer A (${EMAIL_A}):`, signInErr.message); process.exit(1) }
 
   // ── Tests ─────────────────────────────────────────────────────────────────
 
@@ -114,10 +126,11 @@ async function main() {
     : fail(8, `dashboard_stats returned no data or negative count (${fleetCount})`)
 
   // 9. UPDATE recon job — set vehicle_id to B's car (the policy fix)
-  if (bJobs?.[0]?.id) {
-    // Need one of A's jobs first
+  {
     const { data: aJobs } = await anon.from('reconditioning_jobs').select('id').limit(1)
-    if (aJobs?.[0]?.id) {
+    if (!aJobs?.[0]?.id) {
+      fail(9, 'UPDATE recon vehicle_id to B car → rejected', 'SETUP FAIL: no A jobs found — run npm run seed')
+    } else {
       const { error: t9err, count: t9count } = await anon
         .from('reconditioning_jobs')
         .update({ vehicle_id: bCarId })
@@ -125,19 +138,10 @@ async function main() {
       ;(t9count ?? 0) > 0
         ? fail(9, 'UPDATE recon job vehicle_id to B car → rejected', `Affected ${t9count}`)
         : pass(9, 'UPDATE recon job vehicle_id to B car → rejected', t9err?.message ?? 'policy blocked it')
-    } else {
-      pass(9, 'UPDATE recon vehicle_id to B car → n/a (no A jobs)', 'Skip')
     }
-  } else {
-    pass(9, 'UPDATE recon vehicle_id to B car → n/a (no B jobs)', 'Skip')
   }
 
-  // 10. Re-read B's vehicle_economics — recon_total unchanged
-  const beforeBEcon = await service
-    .from('vehicle_economics')
-    .select('recon_total')
-    .eq('id', bCarId)
-    .maybeSingle()
+  // 10. Re-read B's vehicle_economics — recon_total unchanged vs snapshot taken before attacks
   const afterBEcon = await service
     .from('vehicle_economics')
     .select('recon_total')
