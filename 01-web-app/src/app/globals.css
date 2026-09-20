@@ -145,11 +145,13 @@ body::after {
 }
 
 /* Observatory Chrome (UI equipment panels only) */
-.observatory-chrome {
-  background: radial-gradient(120% 120% at 50% 0%, rgba(255, 255, 255, 0.035) 0%, rgba(14, 16, 24, 0.72) 100%);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+@layer components {
+  .observatory-chrome {
+    @apply backdrop-blur-[14px] border;
+    background: radial-gradient(120% 120% at 50% 0%, rgba(255, 255, 255, 0.035) 0%, rgba(14, 16, 24, 0.72) 100%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
 }
 
 /* Glass card (deprecated — use .observatory-chrome) */
