@@ -84,9 +84,9 @@ export function ArchiveStrip({ focalDate, initialPlates }: ArchiveStripProps) {
             <Link
               href={`/?date=${plate.date}`}
               scroll={false}
-              className="group block focus-visible:outline-offset-[-2px] bg-plate-black/50 border border-plate-edge rounded-[3px] overflow-hidden cursor-pointer hover:border-cyanotype/35 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.8)] transition-all duration-300"
+              className="group block focus-visible:outline-offset-[-2px] bg-plate-black border-2 border-plate-edge rounded-lg overflow-hidden cursor-pointer hover:border-cyanotype hover:-translate-y-2 hover:shadow-[0_20px_60px_rgba(122,191,207,0.3)] transition-all duration-300 transform"
             >
-              <div className="relative aspect-square overflow-hidden bg-plate-black group-hover:brightness-105 transition-all duration-300">
+              <div className="relative aspect-square overflow-hidden bg-plate-black group-hover:brightness-125 group-hover:scale-110 transition-all duration-300">
                 <PlateImage
                   src={posterImage(plate)}
                   alt={plate.title}
@@ -94,11 +94,11 @@ export function ArchiveStrip({ focalDate, initialPlates }: ArchiveStripProps) {
                   sizes="(min-width: 1024px) 280px, (min-width: 640px) 33vw, 50vw"
                 />
               </div>
-              <div className="flex flex-col gap-1 p-3">
-                <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-graphite">
+              <div className="flex flex-col gap-2 p-4 bg-gradient-to-b from-plate-slate/50 to-plate-black">
+                <span className="font-mono text-xs uppercase tracking-widest text-cyanotype font-bold">
                   {formatIndexDate(plate.date)} · {plateNumber(plate.date).toLocaleString("en-GB")}
                 </span>
-                <span className="line-clamp-2 font-display text-sm font-normal text-emulsion group-hover:text-safelight transition-colors duration-200">
+                <span className="line-clamp-2 font-display text-base font-bold text-emulsion group-hover:text-safelight group-hover:drop-shadow-lg transition-all duration-200">
                   {plate.title}
                 </span>
               </div>

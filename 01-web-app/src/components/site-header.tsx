@@ -2,20 +2,20 @@ import { ARCHIVE_START, formatIndexDate, todayInArchiveTime } from "@/lib/dates"
 
 export function SiteHeader() {
   return (
-    <header className="observatory-chrome sticky top-0 z-40 border-b border-plate-edge/80 px-6 py-4 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="h-[3.5px] w-[3.5px] rounded-full bg-safelight/90 flex-shrink-0" />
+    <header className="sticky top-0 z-40 bg-plate-slate/95 backdrop-blur-xl border-b-2 border-safelight/40 px-6 py-5 flex items-center justify-between shadow-2xl">
+      <div className="flex items-center gap-4">
+        <div className="h-4 w-4 rounded-full bg-gradient-to-r from-safelight to-cyanotype animate-pulse shadow-lg shadow-safelight/50" />
         <a
           href="/"
-          className="font-display text-lg tracking-widest text-emulsion hover:text-safelight transition-colors duration-200"
+          className="font-display text-3xl font-bold tracking-widest text-emulsion hover:text-safelight hover:drop-shadow-lg transition-all duration-300"
         >
           Apogee
         </a>
       </div>
 
-      <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-graphite border border-white/5 bg-plate-black/40 px-3 py-1 rounded-[4px] hover:border-safelight/30 hover:text-emulsion transition-colors duration-200">
-        Plate archive · {formatIndexDate(ARCHIVE_START)} — {formatIndexDate(todayInArchiveTime())}
-      </p>
+      <div className="font-mono text-xs uppercase tracking-[0.3em] text-safelight bg-plate-black/60 border border-safelight/50 px-4 py-2.5 rounded-lg backdrop-blur-md hover:bg-safelight/10 hover:shadow-lg hover:shadow-safelight/30 transition-all duration-300">
+        📡 Archive · {formatIndexDate(ARCHIVE_START)} — {formatIndexDate(todayInArchiveTime())}
+      </div>
     </header>
   );
 }
