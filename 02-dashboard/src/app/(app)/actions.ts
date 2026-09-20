@@ -229,3 +229,32 @@ export async function deleteReconJob(formData: FormData) {
   revalidatePath(`/inventory/${vehicleId}`)
   revalidatePath('/')
 }
+
+const profileSchema = z.object({
+  dealership_name: z.string().trim().min(1, 'Dealership name is required.').max(80),
+})
+
+export async function updateProfile(
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const parsed = profileSchema.safeParse({
+    dealership_name: formData.get('dealership_name') ?? '',
+  })
+  if (!parsed.success) return { error: parsed.error.issues[0].message, ok: false }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.', ok: false }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update(parsed.data)
+    .eq('id', user.id)
+
+  if (error) return { error: error.message, ok: false }
+
+  revalidatePath('/profile')
+  revalidatePath('/', 'layout')
+  return { error: null, ok: true }
+}

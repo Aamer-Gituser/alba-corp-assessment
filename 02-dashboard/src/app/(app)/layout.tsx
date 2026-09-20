@@ -33,9 +33,12 @@ export default async function AppLayout({
           </nav>
 
           <div className="ml-auto flex items-center gap-4">
-            <span className="hidden text-[12.5px] text-ink-soft sm:inline">
+            <Link
+              href="/profile"
+              className="hidden text-[12.5px] text-ink-soft underline-offset-4 hover:text-ink hover:underline sm:inline"
+            >
               {profile?.dealership_name ?? user?.email}
-            </span>
+            </Link>
             <form action={signOut}>
               <button
                 type="submit"
