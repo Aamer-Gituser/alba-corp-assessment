@@ -44,15 +44,17 @@ export function FocalPlate({ plate }: { plate: Apod }) {
         </p>
       </header>
 
-      <figure className="relative rounded-[4px] md:rounded-md border border-white/[0.08] shadow-[0_20px_70px_rgba(0,0,0,0.9)] overflow-hidden bg-plate-black aspect-4/3 w-full sm:aspect-16/9 group">
-        <div className="absolute -inset-1 blur-3xl opacity-25 -z-10 bg-gradient-to-b from-safelight/20 via-cyanotype/15 to-transparent rounded-2xl pointer-events-none" />
-        <PlateImage
-          src={poster}
-          alt={plate.title}
-          isVideo={isVideo}
-          priority
-          sizes="(min-width: 1280px) 1120px, 100vw"
-        />
+      <figure className="card-3d-wrap rounded-lg overflow-hidden">
+        <div className="relative rounded-lg border border-white/[0.1] shadow-[0_25px_80px_-20px_rgba(0,0,0,0.95)] overflow-hidden bg-plate-black aspect-4/3 w-full sm:aspect-16/9 group card-3d liquid-sheen">
+          <div className="absolute -inset-2 blur-3xl opacity-20 -z-10 bg-gradient-to-b from-safelight/25 via-cosmic-cyan/15 to-cosmic-violet/10 rounded-2xl pointer-events-none" />
+          <PlateImage
+            src={poster}
+            alt={plate.title}
+            isVideo={isVideo}
+            priority
+            sizes="(min-width: 1280px) 1120px, 100vw"
+          />
+        </div>
       </figure>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_260px]">

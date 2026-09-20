@@ -40,7 +40,7 @@ export function DateNavigator({ date }: DateNavigatorProps) {
 
   return (
     <div
-      className="inline-flex items-center gap-2 p-1 bg-plate-black/90 border border-plate-edge rounded-md shadow-lg"
+      className="inline-flex items-center gap-1.5 p-1.5 liquid-shield rounded-xl"
       data-pending={isPending ? "" : undefined}
     >
       <StepButton
@@ -59,7 +59,7 @@ export function DateNavigator({ date }: DateNavigatorProps) {
           min={ARCHIVE_START}
           max={today}
           onChange={(event) => event.target.value && goTo(event.target.value)}
-          className="[color-scheme:dark] cursor-pointer font-mono text-xs text-safelight bg-black/50 px-3 py-1.5 rounded-[3px] border border-white/5 hover:border-safelight/40 focus:outline-none focus:border-safelight transition-colors duration-200"
+          className="[color-scheme:dark] cursor-pointer font-mono text-xs text-cosmic-cyan bg-black/30 px-2.5 py-1 rounded-lg border border-white/10 hover:border-cosmic-cyan/50 focus:outline-none focus:border-cosmic-cyan focus:bg-black/50 transition-colors duration-200 tracking-wider"
         />
       </label>
 
@@ -71,7 +71,7 @@ export function DateNavigator({ date }: DateNavigatorProps) {
         type="button"
         onClick={() => goTo(today)}
         disabled={atEnd}
-        className="text-xs font-mono text-slate-400 hover:text-emulsion px-2.5 py-1 disabled:cursor-not-allowed disabled:opacity-35 transition-colors duration-200"
+        className="text-xs font-mono text-emulsion/60 hover:text-emulsion px-2 py-1 disabled:cursor-not-allowed disabled:opacity-25 transition-colors duration-200"
       >
         Today
       </button>
@@ -79,7 +79,7 @@ export function DateNavigator({ date }: DateNavigatorProps) {
       <button
         type="button"
         onClick={() => goTo(randomArchiveDate())}
-        className="bg-safelight/10 border border-safelight/40 text-safelight hover:bg-safelight/20 text-xs font-mono uppercase tracking-wider px-3 py-1 rounded-[3px] shadow-[0_0_12px_rgba(232,176,87,0.15)] active:scale-95 transition-all duration-200"
+        className="bg-safelight/10 border border-safelight/40 text-safelight hover:bg-safelight/20 text-xs font-mono uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-[0_0_12px_rgba(232,176,87,0.15)] active:scale-95 transition-all duration-200"
       >
         Random
       </button>
@@ -90,7 +90,7 @@ export function DateNavigator({ date }: DateNavigatorProps) {
           isPending ? "opacity-100" : "opacity-0"
         }`}
       >
-        ⏳ Loading…
+        ⏳
       </span>
     </div>
   );
@@ -113,7 +113,7 @@ function StepButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="w-8 h-8 rounded-[4px] bg-white/[0.03] border border-white/10 text-emulsion hover:border-safelight/50 hover:text-safelight active:scale-95 flex items-center justify-center transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-white/10"
+      className="w-9 h-9 rounded-lg liquid-control text-emulsion flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-35"
     >
       {children}
     </button>
