@@ -37,11 +37,10 @@ const instruction = [
 return [
   {
     json: {
-      geminiModel: config.geminiModel || 'gemini-2.0-flash',
+      geminiModel: config.geminiModel,
       geminiBody: {
         contents: [{ role: 'user', parts: [{ text: instruction }] }],
         generationConfig: {
-          temperature: 0.2,
           maxOutputTokens: 2048,
           // Forcing a JSON mime type is the difference between parsing a response and
           // regexing prose out of a markdown code fence.
