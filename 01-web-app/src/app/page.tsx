@@ -35,7 +35,7 @@ export default async function ArchivePage({
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-[1120px] px-5 py-8 sm:px-8 sm:py-12 pt-[52px]">
+    <div className="mx-auto w-full max-w-[1120px] px-5 pb-8 sm:px-8 sm:pb-12 pt-[84px]">
       <SiteHeader date={focalDate} />
 
       {plateResult.ok ? (
