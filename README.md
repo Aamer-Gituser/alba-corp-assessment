@@ -6,11 +6,14 @@ Three tasks built for the Alba Corp engineering assessment.
 
 ## Task 01 — Creative, API-Integrated Web App
 
+**Apogee** — date-addressable NASA APOD archive with liquid glass UI, fullscreen lightbox, and server-only BFF backend.
+
 | Item | Link |
 |---|---|
-| Live URL | TBD |
-| Video | TBD |
+| Live URL | https://01-web-app-aarmers-dev.vercel.app/ |
+| Video | https://www.loom.com/share/74bc74e309ed4ccfa0975e6f41226313 |
 | Folder | [/01-web-app](./01-web-app) |
+| Build Log | [BUILD_LOG.md](./BUILD_LOG.md) |
 
 ---
 
