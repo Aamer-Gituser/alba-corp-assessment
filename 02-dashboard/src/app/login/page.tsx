@@ -5,8 +5,8 @@ import { signIn, signUp, type AuthState } from './actions'
 
 const EMPTY: AuthState = { error: null, notice: null }
 
-const DEMO_EMAIL = process.env.NEXT_PUBLIC_DEMO_EMAIL ?? 'appflow.qa01@gmail.com'
-const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD ?? 'forecourt-demo'
+const DEMO_EMAIL = process.env.NEXT_PUBLIC_DEMO_EMAIL ?? ''
+const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD ?? ''
 
 export default function LoginPage() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
