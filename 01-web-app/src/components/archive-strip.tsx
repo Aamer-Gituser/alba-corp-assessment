@@ -91,7 +91,7 @@ export function ArchiveStrip({ focalDate, initialPlates, archiveError }: Archive
             <Link
               href={`/?date=${plate.date}`}
               scroll={false}
-              className="archive-card focus-visible:outline-offset-[-2px]"
+              className="group block bg-[#0c0e15]/70 backdrop-blur-md border border-white/[0.08] rounded-lg overflow-hidden archive-card-3d focus-visible:outline focus-visible:outline-2 focus-visible:outline-[--arctic] focus-visible:outline-offset-2"
             >
               <div className="relative aspect-[4/3] overflow-hidden bg-[#070810]">
                 {plate.media_type !== "image" ? (
@@ -111,12 +111,14 @@ export function ArchiveStrip({ focalDate, initialPlates, archiveError }: Archive
                     <span className="absolute top-3 right-3 text-[9px] font-[family-name:var(--font-geist-mono)] tracking-widest text-[--arctic]/50 uppercase">Video</span>
                   </div>
                 ) : (
-                  <PlateImage
-                    src={posterImage(plate)}
-                    alt={plate.title}
-                    isVideo={false}
-                    sizes="(min-width: 1024px) 280px, (min-width: 640px) 50vw, 100vw"
-                  />
+                  <div className="w-full h-full transition-transform duration-500 ease-out group-hover:scale-105">
+                    <PlateImage
+                      src={posterImage(plate)}
+                      alt={plate.title}
+                      isVideo={false}
+                      sizes="(min-width: 1024px) 280px, (min-width: 640px) 50vw, 100vw"
+                    />
+                  </div>
                 )}
               </div>
               <div className="flex flex-col gap-1.5 p-4">
@@ -148,7 +150,7 @@ export function ArchiveStrip({ focalDate, initialPlates, archiveError }: Archive
             type="button"
             onClick={loadOlder}
             disabled={status === "loading"}
-            className="px-6 py-2.5 text-sm font-[family-name:var(--font-geist-mono)] tracking-wider border border-white/10 hover:border-[--amber]/40 text-[--text-2] hover:text-[--text-1] transition-colors disabled:opacity-50"
+            className="px-8 py-2.5 text-sm font-[family-name:var(--font-geist-mono)] tracking-wider liquid-glass rounded-full text-white/60 hover:text-white hover:border-[#e8b057]/50 hover:shadow-[0_0_20px_rgba(232,176,87,0.2)] transition-all duration-300 disabled:opacity-40"
           >
             {status === "loading" ? "Loading…" : "Load earlier plates"}
           </button>
