@@ -16,15 +16,16 @@ const fieldStyle = {
   border: '1px solid oklch(0.72 0.03 252 / 52%)',
   color: 'var(--color-ink)',
 }
+async function dispatch(prev: AuthState, formData: FormData): Promise<AuthState> {
+  const m = formData.get('_mode') as string
+  if (m === 'signup') return signUp(prev, formData)
+  if (m === 'forgot') return forgotPassword(prev, formData)
+  return signIn(prev, formData)
+}
+
 export default function LoginPage() {
   const [mode, setMode] = useState<Mode>('signin')
-
-  const signInAction  = mode === 'signin'  ? signIn     : undefined
-  const signUpAction  = mode === 'signup'  ? signUp     : undefined
-  const forgotAction  = mode === 'forgot'  ? forgotPassword : undefined
-  const action = signInAction ?? signUpAction ?? forgotAction ?? signIn
-
-  const [state, formAction, pending] = useActionState(action, EMPTY)
+  const [state, formAction, pending] = useActionState(dispatch, EMPTY)
 
   return (
     <main
@@ -117,7 +118,8 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form action={formAction} className="space-y-4">
+          <form key={mode} action={formAction} className="space-y-4">
+            <input type="hidden" name="_mode" value={mode} />
             {mode === 'signup' && (
               <div>
                 <label className="eyebrow mb-1.5 block" htmlFor="auth-dealership">Dealership name</label>
