@@ -48,12 +48,12 @@ function monthsAgo(n: number) {
 // ──────────────────────────────────────────────────────────────────────────────
 
 const DEALER_A = {
-  email: 'demo@forecourt.example.com',
+  email: 'appflow.qa01@gmail.com',
   password: 'forecourt-demo',
   dealership: 'Marina Motors',
 }
 const DEALER_B = {
-  email: 'rival@forecourt.example.com',
+  email: 'appflow.qa02@gmail.com',
   password: 'forecourt-demo',
   dealership: 'Rashid Auto',
 }
