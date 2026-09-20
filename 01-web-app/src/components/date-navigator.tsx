@@ -40,7 +40,7 @@ export function DateNavigator({ date }: DateNavigatorProps) {
 
   return (
     <div
-      className="bg-gradient-to-r from-plate-slate/90 to-plate-slate/70 backdrop-blur-xl border-2 border-cyanotype/60 rounded-xl p-3 inline-flex items-center gap-2.5 flex-wrap shadow-2xl shadow-cyanotype/20"
+      className="inline-flex items-center gap-2 p-1 bg-plate-black/90 border border-plate-edge rounded-md shadow-lg"
       data-pending={isPending ? "" : undefined}
     >
       <StepButton
@@ -59,7 +59,7 @@ export function DateNavigator({ date }: DateNavigatorProps) {
           min={ARCHIVE_START}
           max={today}
           onChange={(event) => event.target.value && goTo(event.target.value)}
-          className="[color-scheme:dark] cursor-pointer rounded-lg border-2 border-safelight/60 bg-plate-black/80 px-3 py-2 font-mono text-sm font-bold text-safelight hover:border-safelight focus:outline-none focus:border-cyanotype focus:ring-2 focus:ring-cyanotype/30 transition-all duration-200"
+          className="[color-scheme:dark] cursor-pointer font-mono text-xs text-safelight bg-black/50 px-3 py-1.5 rounded-[3px] border border-white/5 hover:border-safelight/40 focus:outline-none focus:border-safelight transition-colors duration-200"
         />
       </label>
 
@@ -71,17 +71,17 @@ export function DateNavigator({ date }: DateNavigatorProps) {
         type="button"
         onClick={() => goTo(today)}
         disabled={atEnd}
-        className="rounded-lg px-4 py-2 text-xs font-mono font-bold text-emulsion hover:bg-cyanotype/20 hover:text-cyanotype border border-cyanotype/40 disabled:cursor-not-allowed disabled:opacity-30 transition-all duration-200"
+        className="text-xs font-mono text-slate-400 hover:text-emulsion px-2.5 py-1 disabled:cursor-not-allowed disabled:opacity-35 transition-colors duration-200"
       >
-        TODAY
+        Today
       </button>
 
       <button
         type="button"
         onClick={() => goTo(randomArchiveDate())}
-        className="border-2 border-safelight bg-safelight/20 text-safelight hover:bg-safelight/40 hover:shadow-lg hover:shadow-safelight/50 rounded-lg px-4 py-2 text-xs font-mono font-bold uppercase tracking-widest active:scale-95 transition-all duration-200"
+        className="bg-safelight/10 border border-safelight/40 text-safelight hover:bg-safelight/20 text-xs font-mono uppercase tracking-wider px-3 py-1 rounded-[3px] shadow-[0_0_12px_rgba(232,176,87,0.15)] active:scale-95 transition-all duration-200"
       >
-        🎲 Random
+        Random
       </button>
 
       <span
@@ -113,7 +113,7 @@ function StepButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="h-10 w-10 rounded-lg bg-plate-black border-2 border-cyanotype/60 text-emulsion hover:border-cyanotype hover:text-cyanotype hover:shadow-lg hover:shadow-cyanotype/40 active:scale-90 flex items-center justify-center transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-30 disabled:border-plate-edge font-bold text-lg"
+      className="w-8 h-8 rounded-[4px] bg-white/[0.03] border border-white/10 text-emulsion hover:border-safelight/50 hover:text-safelight active:scale-95 flex items-center justify-center transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-white/10"
     >
       {children}
     </button>

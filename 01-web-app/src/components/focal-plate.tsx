@@ -44,7 +44,8 @@ export function FocalPlate({ plate }: { plate: Apod }) {
         </p>
       </header>
 
-      <figure className="relative rounded-[4px] md:rounded-md border border-white/[0.08] shadow-[0_30px_100px_rgba(0,0,0,0.7)] overflow-hidden bg-plate-black aspect-4/3 w-full sm:aspect-16/9 group">
+      <figure className="relative rounded-[4px] md:rounded-md border border-white/[0.08] shadow-[0_20px_70px_rgba(0,0,0,0.9)] overflow-hidden bg-plate-black aspect-4/3 w-full sm:aspect-16/9 group">
+        <div className="absolute -inset-1 blur-3xl opacity-25 -z-10 bg-gradient-to-b from-safelight/20 via-cyanotype/15 to-transparent rounded-2xl pointer-events-none" />
         <PlateImage
           src={poster}
           alt={plate.title}
