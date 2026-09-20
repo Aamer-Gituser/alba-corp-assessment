@@ -86,8 +86,10 @@ This creates two dealerships:
 
 | Dealership | Email | Password |
 |---|---|---|
-| Marina Motors (A) | `demo@forecourt.test` | `forecourt-demo` |
-| Rashid Auto (B) | `rival@forecourt.test` | `forecourt-demo` |
+| Marina Motors (A) | `appflow.qa01@gmail.com` | `forecourt-demo` |
+| Rashid Auto (B) | `appflow.qa02@gmail.com` | `forecourt-demo` |
+
+**Or create your own account:** Click "CREATE ACCOUNT" tab and sign up with your email. Email confirmation is disabled, so sign-up is instant (no verification link needed).
 
 ### 5. Run locally
 ```bash
