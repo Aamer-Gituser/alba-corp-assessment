@@ -193,7 +193,7 @@ const mainNodes = [
   {
     parameters: {
       method: 'POST',
-      url: "=https://generativelanguage.googleapis.com/v1/models/{{ $json.geminiModel }}:generateContent",
+      url: "https://generativelanguage.googleapis.com/v1beta/models/{{ $json.geminiModel }}:generateContent",
       authentication: 'genericCredentialType',
       genericAuthType: 'httpHeaderAuth',
       sendBody: true,

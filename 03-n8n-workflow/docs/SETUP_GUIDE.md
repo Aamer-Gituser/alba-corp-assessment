@@ -74,6 +74,20 @@ Create a new **Header Auth** credential:
 
 Name the credential `Gemini API Key`.
 
+The confirmed model for this project is `gemini-2.5-flash`. In the `Config` node, keep:
+
+```json
+"geminiModel": "gemini-2.5-flash"
+```
+
+In `Summarise with Gemini`, use this URL in the URL field (without a leading `=`):
+
+```text
+https://generativelanguage.googleapis.com/v1beta/models/{{ $json.geminiModel }}:generateContent
+```
+
+The URL must stay dynamic so the HTTP request uses the same model shown in `Config`.
+
 ---
 
 ## Step 5 — Fill in Config

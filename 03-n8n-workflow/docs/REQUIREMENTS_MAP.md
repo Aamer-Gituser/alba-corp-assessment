@@ -9,12 +9,12 @@ Run through this before ticking a single box on the submission form.
 
 | # | Requirement (brief wording) | Implementation | Evidence |
 |---|---|---|---|
-| 1 | **A trigger** — schedule/cron, webhook, or manual | `Daily 07:00 GST` (cron, Asia/Dubai) **and** `Run Manually` | `01-canvas.png` |
-| 2 | **External data** — ≥1 real API call or scrape | `Fetch Feed` HTTP node × 3 RSS sources, plus the Gemini REST call | `02-execution-success.png` |
+| 1 | **A trigger** — schedule/cron, webhook, or manual | `Daily 07:00 GST` (cron, Asia/Dubai) **and** `Run Manually` | [`evidence/05-main-workflow-canvas.png`](../evidence/05-main-workflow-canvas.png) |
+| 2 | **External data** — ≥1 real API call or scrape | `Fetch Feed` HTTP node × 3 RSS sources, plus the Gemini REST call | [`evidence/01-ai-enriched-email.png`](../evidence/01-ai-enriched-email.png) |
 | 3 | **Transformation** — reshape the data | `Config` (Set), `Attach Source Meta` (Set), `Parse RSS` (XML), 8 Code nodes, date windowing | `NODE_REFERENCE.md` §9, §11 |
-| 4 | **Conditional logic** — IF/Switch and/or a loop | `Any New Relevant News?` (IF) · `Fetch Feed` two-output error branch · per-feed item fan-out from `Build Source List` | `05-degraded-run.png` |
-| 5 | **Error handling** — deliberate, not accidental | Four independent layers, see below | `05-degraded-run.png`, `06-error-alert.png` |
-| 6 | **A delivered, verifiable output** | Gmail HTML digest **and** Google Sheet history log | `03-digest-email.png`, `04-sheet-history.png` |
+| 4 | **Conditional logic** — IF/Switch and/or a loop | `Any New Relevant News?` (IF) · `Fetch Feed` two-output error branch · per-feed item fan-out from `Build Source List` | [`evidence/04-degraded-feed-quiet-note.png`](../evidence/04-degraded-feed-quiet-note.png) |
+| 5 | **Error handling** — deliberate, not accidental | Four independent layers, see below | [`evidence/04-degraded-feed-quiet-note.png`](../evidence/04-degraded-feed-quiet-note.png), [`evidence/06-error-handler-workflow.png`](../evidence/06-error-handler-workflow.png) |
+| 6 | **A delivered, verifiable output** | Gmail HTML digest **and** Google Sheet history log | [`evidence/01-ai-enriched-email.png`](../evidence/01-ai-enriched-email.png), [`evidence/02-sheets-ai-enriched.png`](../evidence/02-sheets-ai-enriched.png) |
 
 ### Requirement 5 in detail — the four error layers
 
@@ -32,7 +32,7 @@ Run through this before ticking a single box on the submission form.
 | Bonus | Claimed | Where |
 |---|---|---|
 | LLM/AI node for summarising or classifying | ✅ | `Summarise with Gemini` — one-sentence summary, category, and relevance per article |
-| Merging data from two or more sources | ✅ | Three feeds fan in and are deduplicated across sources in `Dedupe, Score & Rank` |
+| Merging data from two or more sources | ✅ | `Merge Feed Results` appends successful and failed feed records before `Dedupe, Score & Rank` |
 | A reusable sub-workflow | ❌ | **Not done.** Cut for the time-box; recorded in Known Limitations |
 | Retry/backoff on flaky calls | ✅ | `Fetch Feed` 3 tries / 2s, `Summarise with Gemini` 2 tries / 3s |
 | Idempotency (re-running doesn't duplicate) | ✅ | Two layers: static-data ledger + Google Sheet history, committed only after delivery |
@@ -47,7 +47,7 @@ Run through this before ticking a single box on the submission form.
 | 2 | **Node-by-node walkthrough** — every significant node, how data moves | `README.md` §3, sourced from `docs/NODE_REFERENCE.md` |
 | 3 | **Setup and credentials** — placeholders, never real secrets | `README.md` §4 + `docs/SETUP_GUIDE.md` + `.env.example` |
 | 4 | **How to run it** — manual trigger or wait for schedule | `README.md` §5 |
-| 5 | **How to verify it worked** — exactly what to see and where, **with a screenshot from a successful run** | `README.md` §6 + `docs/screenshots/` |
+| 5 | **How to verify it worked** — exactly what to see and where, **with a screenshot from a successful run** | `README.md` + `evidence/` |
 
 ---
 
@@ -55,11 +55,11 @@ Run through this before ticking a single box on the submission form.
 
 | # | Requirement | Plan |
 |---|---|---|
-| 1 | Live n8n instance (preferred), with credentials | Decision pending — see `PLAN.md` §10 Q5 |
+| 1 | Live n8n instance (preferred), with credentials | Live n8n Cloud instance is configured; repository remains the reproducible hand-in |
 | 2 | **Or** exported workflow JSON + everything needed to import it | `workflow/*.json` + `docs/SETUP_GUIDE.md` — this route is explicitly allowed |
-| 3 | `README.md` | Task 4 |
-| 4 | `BUILD_LOG.md` | Written during Tasks 1–3, not reconstructed |
-| 5 | Video walkthrough | Task 5 — separate video for this task only |
+| 3 | `README.md` | Present at folder root |
+| 4 | `BUILD_LOG.md` | Present at folder root; dated 20 September 2026 |
+| 5 | Video walkthrough | `docs/VIDEO_SCRIPT.md`; add final Loom URL to the submission form |
 
 ---
 

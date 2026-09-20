@@ -22,7 +22,8 @@ Run Manually ───────────┴→ Config (Set)
    → Fetch Feed (HTTP, retry ×3, 2s backoff)
         ├── ok   → Parse RSS → Attach Source Meta → Normalize & Window
         └── fail → Note Failed Source
-   → Dedupe, Score & Rank   ← both branches merge here
+   → Merge Feed Results (Append)
+   → Dedupe, Score & Rank
    → IF: Any New Relevant News?
         ├── true  → Compose LLM Prompt → Summarise with Gemini
         │           → Build Digest Email → Send Digest (Gmail)
@@ -83,11 +84,23 @@ Expected: all nodes green, digest email arrives, rows added to Sheets.
 
 See [BUILD_LOG.md §5](BUILD_LOG.md) for the full verification checklist with pass/fail.
 
-Key tests:
-- Two consecutive executions — no duplicate articles
-- One feed URL broken — partial run, amber banner, email still delivers
-- `minScore` set to 999 — quiet-note email received, no crash
-- Secrets grep: `grep -r "AIza" .` returns nothing
+Key proofs captured on 20 September 2026:
+
+- Gemini-enriched digest delivered; footer says `summaries: Gemini`.
+- Google Sheets rows contain `aiEnriched = yes` and AI categories.
+- Second execution sends a quiet note with previously-sent counts.
+- A controlled failed feed produces a partial-run result while the workflow continues.
+- Main canvas and separate Error Trigger workflow are visible in the evidence set.
+- Secret review found no real key; `.env.example` contains placeholders only.
+
+Evidence files:
+
+- [Gemini digest](evidence/01-ai-enriched-email.png)
+- [AI-enriched Sheet rows](evidence/02-sheets-ai-enriched.png)
+- [Idempotency quiet note](evidence/03-idempotency-quiet-note.png)
+- [Degraded-source run](evidence/04-degraded-feed-quiet-note.png)
+- [Main workflow canvas](evidence/05-main-workflow-canvas.png)
+- [Error Handler workflow](evidence/06-error-handler-workflow.png)
 
 ---
 
@@ -115,12 +128,19 @@ Edit Code-node logic in `src/nodes/*.js` and tunables in `src/workflow.config.js
 ```
 03-n8n-workflow/
 ├── workflow/
-│   ├── alba-market-pulse.json      # importable, 20 nodes
+│   ├── alba-market-pulse.json      # importable, 21 nodes
 │   └── alba-error-handler.json     # importable, 3 nodes
 ├── src/
 │   ├── build.mjs                   # generates + validates JSON
 │   ├── workflow.config.json        # all tunables (no secrets)
 │   └── nodes/                      # Code-node JS, one file per node
+├── evidence/
+│   ├── 01-ai-enriched-email.png
+│   ├── 02-sheets-ai-enriched.png
+│   ├── 03-idempotency-quiet-note.png
+│   ├── 04-degraded-feed-quiet-note.png
+│   ├── 05-main-workflow-canvas.png
+│   └── 06-error-handler-workflow.png
 ├── docs/
 │   ├── NODE_REFERENCE.md           # every node explained
 │   ├── SETUP_GUIDE.md              # zero-to-running

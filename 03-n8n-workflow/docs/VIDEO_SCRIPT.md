@@ -14,7 +14,7 @@
 
 **Data ready:**
 - At least one prior successful execution (rows in Sheet, email in inbox)
-- One screenshot of the digest email already saved as `docs/screenshots/03-digest-email.png`
+- Evidence screenshots already saved in `evidence/` (the repository links them from the README)
 
 **Check:**
 - Microphone level OK
@@ -35,11 +35,11 @@
 
 *(Click through the canvas as you talk)*
 
-> "Here's the n8n canvas. Two entry points — a daily cron trigger at 07:00 GST, and a Manual Trigger so a reviewer can run it on demand. They merge into a Config node — that's the single source of truth: feed list, keyword weights, relevance threshold, Gemini model name, recipient address. Nothing is hardcoded anywhere else."
+> "Here's the n8n canvas. Two entry points — a daily cron trigger at 07:00 GST, and a Manual Trigger so a reviewer can run it on demand. They enter a Config node — that's the single source of truth: feed list, keyword weights, relevance threshold, Gemini model name, recipient address."
 
 > "Then Load Seen Hashes pulls previous article IDs from Google Sheets — that's idempotency layer two, I'll come back to that."
 
-> "Build Source List fans out one item per feed. This is the key architectural decision: because each feed is its own n8n execution item, a dead feed fails in its own branch and doesn't kill the run."
+> "Build Source List fans out one item per feed. After fetching, successful and failed items meet at Merge Feed Results in Append mode. A dead feed becomes a visible record and does not kill the remaining sources."
 
 > "Fetch Feed has three retries with two-second backoff. If it still fails, output 1 routes to Note Failed Source — which converts the error into a data record. The digest will show an amber 'partial run' banner instead of crashing."
 
@@ -89,7 +89,7 @@
 
 ### [3:15–3:45] Part That Fought Me
 
-> "The thing that fought back was Google News. I originally configured the UAE locale — `hl=en-AE&gl=AE`. Tested it — zero bytes, 302 redirect. No items. Spent some time on this before I realised Google News doesn't serve the AE locale via RSS. Fix was simple: switch to `en-US` locale and put 'UAE OR Dubai OR Abu Dhabi' in the query terms instead. Same coverage, no redirect. It's in the BUILD_LOG as a dead end."
+> "The thing that fought back was Google News. The UAE locale returned a redirect with no usable RSS body. I kept the UAE, Dubai and Abu Dhabi terms in the query and used the working RSS locale instead. The decision and the dead end are recorded in the build log."
 
 ---
 
@@ -99,7 +99,7 @@
 
 > "Second, no reusable sub-workflow. The fetch-parse-normalise chain could be extracted so other workflows can reuse it. I cut it because it's a bonus item and it would have eaten 30 minutes with no new capability in the demo. It's logged in Known Limitations."
 
-> "What I'd do next: add a Slack channel as a second delivery target, switch the idempotency store to a proper database for multi-instance resilience, and add a monthly performance report — which keywords drove the most articles this month?"
+> "What I'd do next: move the history ledger to a transactional database for multi-instance resilience, add optional Slack delivery, and add a monthly report showing which keywords drove the most relevant stories."
 
 ---
 

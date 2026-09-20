@@ -5,7 +5,7 @@ This is the source for the README's node-by-node walkthrough and for the video s
 
 ---
 
-## Main workflow — `Alba Market Pulse — Daily UAE Auto Digest` (20 nodes)
+## Main workflow — `Alba Market Pulse — Daily UAE Auto Digest` (21 nodes)
 
 ### 1. `Daily 07:00 GST` — Schedule Trigger
 Fires daily at 07:00 Asia/Dubai. The digest is meant to be read before the showroom opens,

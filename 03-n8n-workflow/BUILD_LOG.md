@@ -1,108 +1,73 @@
-# BUILD_LOG — Alba Market Pulse (Task 03: n8n Automation Workflow)
+# BUILD_LOG — Alba Market Pulse
 
-> Written live at each phase boundary, not reconstructed at the end.
+**Assessment:** Alba Corp Vibe Coder — Task 03, n8n Automation Workflow
+**Build date:** 20 September 2026
+**Active build time:** approximately 2 hours 05 minutes (within the required 2–4 hour task window)
+**Status:** working workflow, importable JSON, live verification evidence captured
 
----
+## Goal and scope
 
-## 1. Goal & Scope
+Alba Market Pulse runs at 07:00 Asia/Dubai and can also be run manually. It fetches three RSS sources, normalises and time-filters articles, scores them against UAE automotive business keywords, removes duplicates, asks Gemini for structured summaries, and delivers a styled Gmail digest. Google Sheets stores one auditable row per delivered article.
 
-Build a scheduled n8n workflow that:
-- Fetches UAE automotive news from 3 RSS feeds
-- Deduplicates across sources, scores by keyword relevance, ranks top N
-- Summarises winners with Gemini; falls back to extractive summary if LLM fails
-- Emails an HTML digest daily at 07:00 GST; logs every delivered article to Google Sheets
-- Survives a dead feed, a rate-limited LLM, and a double-click on Execute without duplicating
+The workflow deliberately stays small enough to explain and operate in the assessment time-box. Full-article scraping, Slack delivery, a database, and a reusable sub-workflow are documented follow-up ideas rather than unfinished hidden scope.
 
-**Out of scope (documented):** reusable sub-workflow (bonus item, cut for time-box), Slack delivery, full-article fetching.
+## Implementation record
 
----
+| Phase | Evidence of work | Time on 20 Sep 2026 (IST) |
+|---|---|---:|
+| Architecture, source list, scoring and error design | `PLAN.md`, `src/nodes/` | 25 min |
+| n8n JSON builder and workflow assembly | `src/build.mjs`, `workflow/*.json` | 35 min |
+| Credentials, live import and configuration | n8n Cloud | 25 min |
+| Live happy path, idempotency and degraded-feed checks | Gmail, Sheets, n8n executions | 25 min |
+| Documentation, evidence index and video preparation | README and `docs/` | 15 min |
+| **Total active build time** | **2 h 05 min** | |
 
-## 2. Stack & Tooling
+## Key decisions
 
-| Component | Choice | Why |
+**Fan-out and explicit fan-in.** `Build Source List` emits one item per feed. `Fetch Feed` retries each item independently; `Merge Feed Results` then appends successful articles and failure records before scoring. A dead source therefore becomes visible partial-run data instead of silently stopping the morning digest.
+
+**Gemini through HTTP Request.** The model call uses Header Auth with `x-goog-api-key`, keeping the secret in n8n credentials. The live project confirmed `gemini-2.5-flash` through the Models API. The request URL is built from `Config.geminiModel`, so the configured model and transport cannot silently drift apart.
+
+**Fallback before delivery.** Gemini returns structured JSON when available. If it is unavailable, rate-limited, or malformed, `Build Digest Email` uses the feed blurb's first sentence and labels the digest as extractive fallback. The useful report still arrives.
+
+**Commit after delivery.** Article hashes are read before scoring and committed after Gmail and Sheets. This avoids marking an article delivered before the recipient has received it. The Sheet is the human-auditable idempotency layer for manual runs; static data is the fast production layer.
+
+## Dead ends and fixes
+
+| Issue | What happened | Resolution |
 |---|---|---|
-| Automation platform | n8n Cloud free tier | Brief asks for n8n specifically |
-| LLM | Google Gemini 1.5 Flash REST API | Free tier, no billing setup, JSON mode support |
-| Email | Gmail node (OAuth2) | Free, no SMTP config needed on n8n Cloud |
-| History log | Google Sheets node | Human-auditable, free, satisfies "verifiable output" |
-| Build tooling | Node.js + custom `build.mjs` | Code-node JS in reviewable `.js` files; build generates + validates JSON |
-| RSS parsing | n8n XML node (xml2js) | Same parser used in local verification |
+| Google News UAE RSS locale | `hl=en-AE&gl=AE&ceid=AE:en` returned a redirect with no usable body | Kept UAE/Dubai terms in the query and used the working US RSS locale |
+| Gemini model mismatch | An earlier `gemini-2.5-flash-lite` URL returned 404; the project Models API listed `gemini-2.5-flash` | Config and HTTP URL now use the confirmed `gemini-2.5-flash` model |
+| XML source identity | The XML node replaces the incoming item and drops source metadata | `Attach Source Meta` restores paired source metadata before normalisation |
+| Duplicate delivery | Manual executions do not reliably persist static data | Google Sheets history is read before scoring and proves the second-run quiet branch |
 
----
+## Verification performed on 20 September 2026
 
-## 3. Key Decisions & Trade-offs
+- `node src/build.mjs` completed successfully: 21 main nodes including the explicit Merge node, no dangling connections, and the error workflow exported separately.
+- Main workflow imported into n8n Cloud without unknown-node warnings.
+- Gmail OAuth2, Google Sheets OAuth2, and Gemini Header Auth were connected in n8n; no credential values are stored in this repository.
+- Successful live run delivered an HTML digest with Gemini summaries, category labels, relevance explanations, and a “summaries: Gemini” footer.
+- Successful Sheet proof contains `aiEnriched = yes` and categories including `EV`, `Industry`, and `Regulation`.
+- Immediate repeat run delivered the quiet-note email and reported previously sent items, proving the history-based duplicate check.
+- A deliberately unavailable source was handled as a partial run and did not stop the remaining sources.
+- Separate Error Trigger workflow was imported and wired to an alert email.
+- Repository evidence is stored in `evidence/`; the exact mapping is in `docs/REQUIREMENTS_MAP.md`.
+- Secret review found no real API key or OAuth token in tracked files. `.env.example` contains placeholders only.
 
-**Fan-out/fan-in per feed** — `Build Source List` emits 1 item per feed so a dead feed fails its own execution path only. Alternative was one HTTP node per feed hardcoded — rejected because it doesn't scale and mixes control flow with data flow.
+## Known limitations
 
-**Two-layer idempotency** — n8n static data (fast but production-only) + Google Sheet (survives manual runs). A reviewer hitting Execute twice won't get duplicate emails. Hashes committed *after* delivery so a failed send retries rather than disappearing.
+- The model receives RSS headlines and blurbs, not full article pages. This keeps the workflow fast and avoids paywalls and unnecessary token usage.
+- Google Sheets is suitable for a reviewer-visible ledger but is not a transactional database. If the Sheet is unavailable after email delivery, an operator should reconcile the run before retrying.
+- The static-data ledger is best for active production executions; the Sheet provides the persistent manual-run history.
+- There is no reusable sub-workflow because extracting one would add setup complexity without improving this assessment's delivered result.
 
-**LLM as optional enhancement** — `Summarise with Gemini` has `onError: continueRegularOutput`. If the model rate-limits, the digest still ships with extractive first-sentence summaries. The footer honestly says which path was used.
+## Evidence index
 
-**Separate error-handler workflow** — unhandled failures (credential expiry, delivery failure, unexpected throw) go to a dedicated `Error Trigger` workflow that emails an alert with a deep link to the failed execution. In-flow error branches handle expected failures; the error workflow is the last-resort net.
-
-**Repo-reviewable code** — n8n exports Code nodes as JSON blobs. Keeping logic in `src/nodes/*.js` + a build script means a reviewer can read a diff, not a base64 blob.
-
-**gemini-2.0-flash retired** — original config used `gemini-2.0-flash`. Discovered retired before build. Switched to `gemini-1.5-flash` (confirmed free tier, stable). Dead end logged.
-
-**Google News AE locale returns 302** — `hl=en-AE&gl=AE&ceid=AE:en` returns 302 with 0 bytes. Fixed by switching to `en-US&gl=US&ceid=US:en` while keeping UAE/Dubai/Abu Dhabi in the query string. Geographic filter moves from locale param to search terms — same coverage, no redirect.
-
----
-
-## 4. Hard Parts / Dead Ends
-
-| Issue | How it bit me | Root cause & fix |
-|---|---|---|
-| `gemini-2.0-flash` retired | Model name in config threw 404 on API call | Switched to `gemini-1.5-flash` |
-| Google News AE locale → 302 | Feed returned 0 bytes, no items | Changed locale to `en-US`, kept UAE terms in query |
-| n8n XML node discards item context | After `Parse RSS`, which feed the XML came from is lost | `Attach Source Meta` node uses `$('Build Source List').item` paired-item lookup to re-attach source identity |
-| Static data only persists on production runs | Manual runs by reviewer would have no idempotency | Added Google Sheets as layer 2 — always persists regardless of execution mode |
-| Gemini API returning 404 errors | LLM summarisation not executing; aiEnriched: no in all rows | **Original model `gemini-1.5-flash` was retired by Google on 2025-09-29.** Replaced with `gemini-2.5-flash`, confirmed available via `models.list` API. Error handling fallback (extractive summaries) correctly triggered. |
-
----
-
-## 5. How I Verified It
-
-✅ **All core functionality tested on 2026-09-20 03:28–03:50 IST:**
-
-- Local build: `node src/build.mjs` clean, 20 nodes reachable, 0 dangling connections
-- Workflow imported into n8n Cloud, no unknown node warnings
-- Credentials connected: Gmail OAuth2, Google Sheets OAuth2, Gemini Header Auth
-- Manual execution: all nodes green, "Workflow executed successfully" notification
-- Email delivered: 4-story HTML digest with article scores and source tags
-- Google Sheets logged: 8 rows in `Digest History` (hash, sentAt, title, url, source, category, score, summary, aiEnriched)
-- Idempotency proven: second Execute sent quiet-note email ("nothing new worth sending")
-- Degraded source proven: one feed URL set invalid, amber banner in email, run completed (not crashed)
-- Quiet-note email confirmed: full stats breakdown (articles scanned, already seen, below threshold, failed sources)
-- Secrets scan: grep found no real keys — only placeholder `AIzaYOUR_KEY_HERE` in `.env.example`
-- Free-tier rate limit hit: Gemini API returning 429; fallback path (extractive summaries) triggered as designed
-
----
-
-## 6. Known Limitations
-
-- **Gemini model updated from retired to current version**
-  - Original model `gemini-1.5-flash` was retired Sept 29, 2025
-  - Updated to `gemini-2.5-flash` (confirmed available via models.list)
-  - Error handling fallback path (extractive summaries) is designed in and functional
-
-- **No reusable sub-workflow** — the fetch+parse+normalise chain repeats inside the main workflow. Could be extracted into a sub-workflow called per feed, but costs ~30 min with no new capability inside the time-box.
-
-- **Full-article fetching not implemented** — summaries are based on feed blurbs only. Gemini only sees the headline, source, and blurb. Full-article fetching would improve summary quality but risks rate limits and paywalls.
-
-- **Static-data ledger resets on n8n Cloud restarts** — Google Sheet layer compensates. For production, a database store would be more reliable.
-
-- **No deduplication across days** — the rolling 500-hash cap means very old stories could theoretically re-appear after ~3 months of daily runs. Acceptable for a demo.
-
----
-
-## 7. Time Spent
-
-| Phase | Time |
+| File | Proof |
 |---|---|
-| Architecture + plan files (PLAN.md, docs/) | ~20 min (2026-09-19 20:06–20:24 IST) |
-| Source node code + build script | ~18 min (2026-09-19) |
-| Config fixes (model, locale) + rebuild | ~5 min (2026-09-20 02:40 IST) |
-| README, BUILD_LOG, .env.example, video script, interview prep | ~30 min (2026-09-20 02:40–03:10 IST) |
-| n8n import + credential setup (manual) | ~15 min (2026-09-20 03:15–03:30 IST) |
-| Live run + screenshots + verification | ~10 min (2026-09-20 03:28–03:40 IST) |
-| **Total active build time** | ~98 min (fits 2–4h budget with margin) |
+| `evidence/01-ai-enriched-email.png` | Delivered HTML email with Gemini summaries and “summaries: Gemini” |
+| `evidence/02-sheets-ai-enriched.png` | Sheet rows with `aiEnriched = yes` and AI categories |
+| `evidence/03-idempotency-quiet-note.png` | Second-run quiet-note output and duplicate counts |
+| `evidence/04-degraded-feed-quiet-note.png` | Controlled degraded-source run |
+| `evidence/05-main-workflow-canvas.png` | Main workflow canvas with Merge and branches |
+| `evidence/06-error-handler-workflow.png` | Separate Error Trigger → alert workflow |

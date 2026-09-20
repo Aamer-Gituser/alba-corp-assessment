@@ -1,7 +1,6 @@
 # Alba Market Pulse — Implementation Plan (Task 03, n8n Automation Workflow)
 
-> **Status: AWAITING APPROVAL.** Nothing is pushed to git, nothing is uploaded to n8n.
-> Draft source files exist on disk (see §6) and are regenerated from this plan on approval.
+> **Status: IMPLEMENTED AND VERIFIED — 20 September 2026.** The live workflow is configured in n8n Cloud and the reproducible source/export is in this folder.
 
 **Goal:** A scheduled n8n workflow that collects UAE automotive-market news from three feeds, deduplicates and scores it against a business keyword list, summarises the survivors with an LLM, and emails a styled daily digest — while surviving a dead feed, a rate-limited LLM, and a double-click on Execute.
 
@@ -55,7 +54,7 @@ Copied from `../ASSESSMENT_RULES.md`. Every task inherits these.
 
 ---
 
-## 3. Node Design (20 nodes, main workflow)
+## 3. Node Design (21 nodes, main workflow)
 
 ```
 Daily 07:00 GST (cron) ─┐
@@ -260,8 +259,8 @@ Open the `Config` node, replace `REPLACE_WITH_YOUR_EMAIL@example.com` and
 ### Task 3: Run it for real and capture evidence
 
 **Files:**
-- Create: `docs/screenshots/01-canvas.png`, `02-execution-success.png`, `03-digest-email.png`,
-  `04-sheet-history.png`, `05-degraded-run.png`, `06-error-alert.png`
+- Evidence captured in `evidence/`: AI-enriched email, Sheet rows, quiet-note run, degraded run,
+  main canvas, and Error Handler canvas.
 
 **Interfaces:**
 - Consumes: the configured workflows from Task 2
@@ -293,7 +292,7 @@ Screenshot, then restore.
 - [ ] **Step 5: Commit the evidence**
 
 ```bash
-git add docs/screenshots
+git add evidence
 git commit -m "docs(n8n): add verification screenshots from live runs"
 ```
 

@@ -41,7 +41,7 @@ return [
       geminiBody: {
         contents: [{ role: 'user', parts: [{ text: instruction }] }],
         generationConfig: {
-          maxOutputTokens: 2048,
+          maxOutputTokens: 8192,
           // Forcing a JSON mime type is the difference between parsing a response and
           // regexing prose out of a markdown code fence.
           responseMimeType: 'application/json',
