@@ -32,35 +32,30 @@ export function SiteHeader({ date }: SiteHeaderProps) {
   const atEnd = date >= today;
 
   return (
-    <header className="fixed top-5 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
-      <div className="vision-dock pointer-events-auto rounded-full px-5 py-2.5 flex items-center justify-between gap-6 md:gap-10 w-full max-w-5xl">
+    <header className="masthead">
+      <div className="max-w-[1120px] mx-auto px-6 sm:px-8 h-[52px] flex items-center justify-between">
 
-        {/* Brand: Apogee with Cosmic Beacon */}
-        <div className="flex items-center gap-3 min-w-fit">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 shadow-[0_0_10px_#ff9f0a]"></span>
-          </span>
-          <a
-            href="/"
-            className="font-serif text-lg tracking-wide text-white hover:text-cyan-300 transition-colors duration-200 font-medium"
-          >
-            Apogee
-          </a>
-        </div>
+        {/* Brand */}
+        <a
+          href="/"
+          className="font-[family-name:var(--font-fraunces)] text-xl tracking-[0.35em] uppercase text-white hover:text-[--text-1] transition-colors"
+        >
+          Apogee
+        </a>
 
-        {/* Integrated Navigation Pod */}
-        <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 bg-white/[0.03] rounded-lg border border-white/[0.1]">
-          <ControlButton
-            label="Previous day"
+        {/* Date navigation */}
+        <div className="hidden sm:flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="Previous plate"
             disabled={atStart}
             onClick={() => goTo(shiftDate(date, -1))}
-            aria-label="Previous plate"
+            className="w-7 h-7 rounded flex items-center justify-center text-sm text-[--text-2] hover:text-[--text-1] hover:bg-white/5 transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
           >
             ←
-          </ControlButton>
+          </button>
 
-          <label className="relative px-2 py-1">
+          <label className="relative">
             <span className="sr-only">Choose a date to travel to</span>
             <input
               type="date"
@@ -68,79 +63,47 @@ export function SiteHeader({ date }: SiteHeaderProps) {
               min={ARCHIVE_START}
               max={today}
               onChange={(e) => e.target.value && goTo(e.target.value)}
-              className="[color-scheme:dark] cursor-pointer font-mono text-xs text-cyan-300/90 bg-transparent px-1 rounded-md border-0 focus:outline-none focus:ring-1 focus:ring-cyan-400/50"
+              className="[color-scheme:dark] cursor-pointer font-[family-name:var(--font-geist-mono)] text-xs text-[--arctic] bg-transparent px-2 py-1 rounded border-0 focus:outline-none focus:ring-1 focus:ring-[--arctic]/40"
             />
           </label>
 
-          <ControlButton
-            label="Next day"
+          <button
+            type="button"
+            aria-label="Next plate"
             disabled={atEnd}
             onClick={() => goTo(shiftDate(date, 1))}
-            aria-label="Next plate"
+            className="w-7 h-7 rounded flex items-center justify-center text-sm text-[--text-2] hover:text-[--text-1] hover:bg-white/5 transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
           >
             →
-          </ControlButton>
+          </button>
 
-          <ControlButton
-            label="Today"
+          <button
+            type="button"
+            aria-label="Go to today"
             disabled={atEnd}
             onClick={() => goTo(today)}
-            className="text-xs font-mono text-zinc-300 hover:text-white"
+            className="px-2 py-1 text-xs font-[family-name:var(--font-geist-mono)] text-[--text-2] hover:text-[--text-1] hover:bg-white/5 rounded transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
           >
             Today
-          </ControlButton>
+          </button>
 
-          <ControlButton
-            label="Random plate"
+          <button
+            type="button"
+            aria-label="Random plate"
             onClick={() => goTo(randomArchiveDate())}
-            className="vision-btn-amber text-xs font-mono font-semibold"
+            className="text-[--amber] hover:text-amber-300 text-xs font-[family-name:var(--font-geist-mono)] uppercase tracking-widest transition-colors"
           >
-            🎲
-          </ControlButton>
+            Random
+          </button>
         </div>
 
-        {/* Archive Telemetry Pill */}
-        <div className="flex items-center gap-2 text-[11px] font-mono tracking-widest text-zinc-300 ml-auto min-w-fit">
-          <span className="text-cyan-400/80">Plate</span>
-          <span>{plateNumber(date).toLocaleString("en-GB")}</span>
+        {/* Plate counter */}
+        <div
+          className={`font-[family-name:var(--font-geist-mono)] text-[11px] tracking-[0.2em] text-[--arctic] transition-opacity ${isPending ? "opacity-50" : "opacity-100"}`}
+        >
+          Plate {plateNumber(date).toLocaleString("en-GB")}
         </div>
-
-        {/* Loading Indicator */}
-        {isPending && (
-          <span className="absolute left-1/2 -translate-x-1/2 bottom-1 text-[10px] font-mono tracking-widest text-amber-400">
-            ⏳
-          </span>
-        )}
       </div>
     </header>
-  );
-}
-
-function ControlButton({
-  label,
-  disabled,
-  onClick,
-  children,
-  className,
-  ...props
-}: {
-  label: string;
-  disabled?: boolean;
-  onClick?: () => void;
-  children: React.ReactNode;
-  className?: string;
-  [key: string]: any;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      disabled={disabled}
-      onClick={onClick}
-      className={className || "vision-btn w-8 h-8 rounded-lg flex items-center justify-center text-sm"}
-      {...props}
-    >
-      {children}
-    </button>
   );
 }

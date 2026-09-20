@@ -35,15 +35,8 @@ export default async function ArchivePage({
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-[1120px] px-5 py-8 sm:px-8 sm:py-12 pt-24">
+    <div className="mx-auto w-full max-w-[1120px] px-5 py-8 sm:px-8 sm:py-12 pt-[52px]">
       <SiteHeader date={focalDate} />
-
-      <div className="mb-8">
-        <p className="max-w-[60ch] text-sm leading-relaxed text-zinc-400">
-          Every day since 16 June 1995, NASA has published one photograph of the
-          universe. Travel to a date and see the one from that day.
-        </p>
-      </div>
 
       {plateResult.ok ? (
         <FocalPlate plate={plateResult.data} />

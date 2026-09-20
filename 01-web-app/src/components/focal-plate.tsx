@@ -17,30 +17,30 @@ export function FocalPlate({ plate }: { plate: Apod }) {
   const isVideo = plate.media_type !== "image";
 
   return (
-    <article className="animate-rise">
-      <header className="mb-8 flex flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs uppercase tracking-[0.25em] text-cyan-400/90 font-semibold">
-          <span>Plate {plateNumber(plate.date).toLocaleString("en-GB")}</span>
-          <span className="text-white/20" aria-hidden>
-            /
-          </span>
-          <time dateTime={plate.date}>{formatIndexDate(plate.date)}</time>
-        </div>
+    <article>
+      {/* Plate meta line */}
+      <div className="animate-entrance mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 font-[family-name:var(--font-geist-mono)] text-[10px] uppercase tracking-[0.35em] text-[--arctic]">
+        <span>Plate {plateNumber(plate.date).toLocaleString("en-GB")}</span>
+        <span className="text-white/15" aria-hidden>/</span>
+        <time dateTime={plate.date}>{formatIndexDate(plate.date)}</time>
+        <span className="flex-1 h-px bg-[--ruled] hidden sm:block" aria-hidden />
+      </div>
 
-        <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl leading-[1.1] text-white font-normal tracking-tight">
-          {plate.title}
-        </h1>
+      {/* Title */}
+      <h1 className="animate-entrance font-[family-name:var(--font-fraunces)] text-5xl md:text-6xl lg:text-[5.5rem] leading-[1.05] text-[--text-1] font-normal tracking-tight mb-4">
+        {plate.title}
+      </h1>
 
-        {plate.copyright && (
-          <p className="font-mono text-sm italic text-zinc-400">
-            {plate.copyright.replace(/\s+/g, " ").trim()} · {formatLongDate(plate.date)}
-          </p>
-        )}
-      </header>
+      {/* Photographer credit */}
+      {plate.copyright && (
+        <p className="animate-entrance font-[family-name:var(--font-geist-mono)] text-sm italic text-[--text-2] mb-8">
+          {plate.copyright.replace(/\s+/g, " ").trim()} · {formatLongDate(plate.date)}
+        </p>
+      )}
 
-      <figure className="relative">
-        <div className="focal-bloom" />
-        <div className="relative rounded-2xl md:rounded-3xl overflow-hidden border border-white/[0.12] shadow-[0_30px_90px_rgba(0,0,0,0.85)] bg-plate-black aspect-4/3 w-full sm:aspect-16/9 group">
+      {/* Full-width image */}
+      <figure className="animate-entrance relative group mb-10">
+        <div className="plate-frame aspect-[4/3] sm:aspect-[16/9] w-full">
           <PlateImage
             src={poster}
             alt={plate.title}
@@ -49,27 +49,28 @@ export function FocalPlate({ plate }: { plate: Apod }) {
             sizes="(min-width: 1280px) 1120px, 100vw"
           />
 
-          {/* Floating Action Pill */}
+          {/* Floating action */}
           <a
             href={plate.hdurl ?? plate.url}
             target="_blank"
             rel="noreferrer noopener"
-            className="focal-action-pill group-hover:opacity-100"
+            className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 backdrop-blur border border-white/20 rounded px-3 py-1.5 text-[11px] font-[family-name:var(--font-geist-mono)] text-white tracking-widest hover:border-[--amber]"
           >
-            ↗ {isVideo ? "Watch" : "View Full Res"}
+            ↗ {isVideo ? "WATCH" : "FULL RES"}
           </a>
         </div>
       </figure>
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <p className="max-w-[72ch] text-base leading-relaxed text-zinc-300 font-light">
+      {/* Explanation + telemetry */}
+      <div className="animate-entrance grid gap-10 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <p className="text-base leading-[1.75] text-[--text-2] font-[family-name:var(--font-geist-sans)]">
           {plate.explanation}
         </p>
 
-        <dl className="h-fit bg-white/[0.03] backdrop-blur-lg border border-white/[0.08] rounded-2xl p-6 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400">
-          <div className="text-cyan-400/80 font-semibold mb-4">Telemetry</div>
+        <dl className="telemetry-pod">
+          <div className="text-[--arctic] font-semibold mb-4">Telemetry</div>
           <MetaRow label="Medium" value={isVideo ? "Video Stream" : "Photograph"} />
-          <MetaRow label="Filed" value={formatIndexDate(plate.date)} />
+          <MetaRow label="Filed"  value={formatIndexDate(plate.date)} />
           <MetaRow label="Credit" value={plate.copyright ? "Attributed" : "Public domain"} />
         </dl>
       </div>
@@ -79,9 +80,9 @@ export function FocalPlate({ plate }: { plate: Apod }) {
 
 function MetaRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-white/[0.05] py-2.5 last:border-0">
-      <dt className="text-zinc-500">{label}</dt>
-      <dd className="text-zinc-200 font-semibold">{value}</dd>
+    <div className="flex items-baseline justify-between gap-4 border-b border-[--ruled] py-2.5 last:border-0">
+      <dt className="text-[--text-2]">{label}</dt>
+      <dd className="text-[--text-1] font-semibold">{value}</dd>
     </div>
   );
 }

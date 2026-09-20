@@ -15,6 +15,8 @@ const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
   display: "swap",
+  weight: "variable",
+  axes: ["opsz", "SOFT", "WONK"],
 });
 
 const geistSans = Geist({
