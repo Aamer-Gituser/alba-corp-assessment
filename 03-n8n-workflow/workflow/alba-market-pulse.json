@@ -200,6 +200,21 @@
     },
     {
       "parameters": {
+        "mode": "append",
+        "includeOtherFields": false
+      },
+      "id": "merge-feed-results",
+      "name": "Merge Feed Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        1450,
+        380
+      ],
+      "notes": "Fan-in: combines successful feeds (Normalize & Window) and failed-feed records (Note Failed Source) into one stream before scoring."
+    },
+    {
+      "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "// The decision layer: collapse duplicates, drop anything already sent, score what is\n// left against the business keyword list, and keep only the top N.\nconst config = $('Config').first().json;\nconst minScore = Number(config.minScore) || 1;\nconst maxItems = Number(config.maxItems) || 8;\nconst keywords = Array.isArray(config.keywords) ? config.keywords : [];\n\nconst incoming = $input.all().map((item) => item.json);\nconst degraded = incoming.filter((row) => row.__degradedSource);\nconst candidates = incoming.filter((row) => !row.__degradedSource);\n\n// --- Idempotency, two layers ------------------------------------------------------\n// Layer 1: workflow static data. Fast and dependency-free, but n8n only persists it on\n// production (scheduled) executions — never on manual ones.\nconst store = $getWorkflowStaticData('global');\nif (!Array.isArray(store.seenHashes)) store.seenHashes = [];\nconst seen = new Set(store.seenHashes.map(String));\n\n// Layer 2: the Google Sheet history. Survives manual runs and is human-auditable, which\n// is what actually makes it safe for a reviewer to hit Execute twice in a row.\ntry {\n  for (const row of $('Load Seen Hashes').all()) {\n    if (row.json?.hash) seen.add(String(row.json.hash));\n  }\n} catch {\n  // Sheet not configured yet — static data alone still prevents same-run duplicates.\n}\n\nconst scoreOf = (article) => {\n  const title = String(article.title || '').toLowerCase();\n  const body = String(article.summarySource || '').toLowerCase();\n  let score = 0;\n  const matched = [];\n\n  for (const keyword of keywords) {\n    const term = String(keyword.term || '').toLowerCase();\n    if (!term) continue;\n    const weight = Number(keyword.weight) || 1;\n    // A keyword in the headline is worth far more than one buried in the blurb.\n    if (title.includes(term)) {\n      score += weight * 3;\n      matched.push(keyword.term);\n    } else if (body.includes(term)) {\n      score += weight;\n      matched.push(keyword.term);\n    }\n  }\n\n  return { score: score * (Number(article.sourceWeight) || 1), matched: [...new Set(matched)] };\n};\n\nconst byHash = new Map();\nlet duplicatesCollapsed = 0;\nlet alreadySent = 0;\nlet belowThreshold = 0;\n\nfor (const article of candidates) {\n  if (seen.has(article.hash)) {\n    alreadySent += 1;\n    continue;\n  }\n  if (byHash.has(article.hash)) {\n    duplicatesCollapsed += 1;\n    continue;\n  }\n\n  const { score, matched } = scoreOf(article);\n  if (score < minScore) {\n    belowThreshold += 1;\n    continue;\n  }\n\n  byHash.set(article.hash, { ...article, score, matchedKeywords: matched });\n}\n\nconst ranked = [...byHash.values()]\n  .sort(\n    (a, b) =>\n      b.score - a.score || new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),\n  )\n  .slice(0, maxItems);\n\nreturn [\n  {\n    json: {\n      hasNews: ranked.length > 0,\n      articles: ranked,\n      stats: {\n        fetched: candidates.length,\n        selected: ranked.length,\n        duplicatesCollapsed,\n        alreadySent,\n        belowThreshold,\n        sourcesOk: new Set(candidates.map((article) => article.sourceName)).size,\n        sourcesFailed: degraded.map((row) => ({ sourceName: row.sourceName, reason: row.reason })),\n        generatedAt: new Date().toISOString(),\n      },\n    },\n  },\n];\n"
       },
@@ -502,7 +517,7 @@
       "main": [
         [
           {
-            "node": "Dedupe, Score & Rank",
+            "node": "Merge Feed Results",
             "type": "main",
             "index": 0
           }
@@ -510,6 +525,17 @@
       ]
     },
     "Note Failed Source": {
+      "main": [
+        [
+          {
+            "node": "Merge Feed Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Feed Results": {
       "main": [
         [
           {

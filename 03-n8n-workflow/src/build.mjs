@@ -156,6 +156,16 @@ const mainNodes = [
   },
   codeNode('Normalize & Window', 'normalize-and-window', [1340, 240]),
   codeNode('Note Failed Source', 'note-failed-source', [900, 520]),
+  {
+    parameters: { mode: 'append', includeOtherFields: false },
+    id: 'merge-feed-results',
+    name: 'Merge Feed Results',
+    type: 'n8n-nodes-base.merge',
+    typeVersion: 2.1,
+    position: [1450, 380],
+    notes:
+      'Fan-in: combines successful feeds (Normalize & Window) and failed-feed records (Note Failed Source) into one stream before scoring.',
+  },
   codeNode('Dedupe, Score & Rank', 'dedupe-score-rank', [1560, 360]),
   {
     parameters: {
@@ -280,8 +290,9 @@ const mainConnections = {
   },
   'Parse RSS': { main: [[{ node: 'Attach Source Meta', type: 'main', index: 0 }]] },
   'Attach Source Meta': { main: [[{ node: 'Normalize & Window', type: 'main', index: 0 }]] },
-  'Normalize & Window': { main: [[{ node: 'Dedupe, Score & Rank', type: 'main', index: 0 }]] },
-  'Note Failed Source': { main: [[{ node: 'Dedupe, Score & Rank', type: 'main', index: 0 }]] },
+  'Normalize & Window': { main: [[{ node: 'Merge Feed Results', type: 'main', index: 0 }]] },
+  'Note Failed Source': { main: [[{ node: 'Merge Feed Results', type: 'main', index: 0 }]] },
+  'Merge Feed Results': { main: [[{ node: 'Dedupe, Score & Rank', type: 'main', index: 0 }]] },
   'Dedupe, Score & Rank': { main: [[{ node: 'Any New Relevant News?', type: 'main', index: 0 }]] },
   'Any New Relevant News?': {
     main: [
