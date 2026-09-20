@@ -111,49 +111,51 @@ export function MarginByMonth({ data }: { data: MonthlyPerformance[] }) {
   }))
   const empty = chart.every((row) => row.margin === 0)
 
-  if (empty) {
-    return (
-      <EmptyPlot message="No cars sold yet. Margin appears here once a vehicle is marked sold." />
-    )
-  }
-
   return (
-    <>
-      <ResponsiveContainer width="100%" height={210}>
-        <BarChart data={chart} margin={{ top: 8, right: 4, bottom: 0, left: -12 }}>
-          <CartesianGrid stroke={RULE} vertical={false} />
-          <XAxis dataKey="month" {...axis} />
-          <YAxis
-            {...axis}
-            width={62}
-            tickFormatter={(value: number) => moneyCompact(value)}
+    <div className="rounded-[var(--radius-card)] border border-rule bg-surface p-5">
+      <p className="eyebrow mb-0.5">Margin realised</p>
+      <p className="mb-4 text-[12px] text-ink-soft">Last 6 months</p>
+      {empty ? (
+        <EmptyPlot message="No cars sold yet. Margin appears here once a vehicle is marked sold." />
+      ) : (
+        <>
+          <ResponsiveContainer width="100%" height={210}>
+            <BarChart data={chart} margin={{ top: 8, right: 4, bottom: 0, left: -12 }}>
+              <CartesianGrid stroke={RULE} vertical={false} />
+              <XAxis dataKey="month" {...axis} />
+              <YAxis
+                {...axis}
+                width={62}
+                tickFormatter={(value: number) => moneyCompact(value)}
+              />
+              <Tooltip
+                cursor={{ fill: 'rgba(16,22,29,0.04)' }}
+                content={({ active, payload, label }) =>
+                  active && payload?.length ? (
+                    <Panel
+                      label={String(label)}
+                      rows={[
+                        {
+                          key: 'Margin realised',
+                          value: money(Number(payload[0].value)),
+                          swatch: MARGIN,
+                        },
+                      ]}
+                    />
+                  ) : null
+                }
+              />
+              <Bar dataKey="margin" fill={MARGIN} radius={[4, 4, 0, 0]} maxBarSize={38} />
+            </BarChart>
+          </ResponsiveContainer>
+          <TableTwin
+            caption="Margin realised by month"
+            head={['Month', 'Margin']}
+            rows={chart.map((row) => [row.month, money(row.margin)])}
           />
-          <Tooltip
-            cursor={{ fill: 'rgba(16,22,29,0.04)' }}
-            content={({ active, payload, label }) =>
-              active && payload?.length ? (
-                <Panel
-                  label={String(label)}
-                  rows={[
-                    {
-                      key: 'Margin realised',
-                      value: money(Number(payload[0].value)),
-                      swatch: MARGIN,
-                    },
-                  ]}
-                />
-              ) : null
-            }
-          />
-          <Bar dataKey="margin" fill={MARGIN} radius={[4, 4, 0, 0]} maxBarSize={38} />
-        </BarChart>
-      </ResponsiveContainer>
-      <TableTwin
-        caption="Margin realised by month"
-        head={['Month', 'Margin']}
-        rows={chart.map((row) => [row.month, money(row.margin)])}
-      />
-    </>
+        </>
+      )}
+    </div>
   )
 }
 
@@ -170,66 +172,70 @@ export function ReconSpend({ data }: { data: ReconByCategory[] }) {
     }))
     .filter((row) => row.cost > 0)
 
-  if (!chart.length) {
-    return <EmptyPlot message="No reconditioning logged yet. Add a job to a vehicle to see the split." />
-  }
-
   return (
-    <>
-      <ResponsiveContainer width="100%" height={210}>
-        <BarChart
-          data={chart}
-          layout="vertical"
-          margin={{ top: 4, right: 12, bottom: 0, left: 8 }}
-          barCategoryGap={6}
-        >
-          <CartesianGrid stroke={RULE} horizontal={false} />
-          <XAxis
-            type="number"
-            {...axis}
-            tickFormatter={(value: number) => moneyCompact(value)}
+    <div className="rounded-[var(--radius-card)] border border-rule bg-surface p-5">
+      <p className="eyebrow mb-0.5">Recon spend by category</p>
+      <p className="mb-4 text-[12px] text-ink-soft">All time</p>
+      {!chart.length ? (
+        <EmptyPlot message="No reconditioning logged yet. Add a job to a vehicle to see the split." />
+      ) : (
+        <>
+          <ResponsiveContainer width="100%" height={210}>
+            <BarChart
+              data={chart}
+              layout="vertical"
+              margin={{ top: 4, right: 12, bottom: 0, left: 8 }}
+              barCategoryGap={6}
+            >
+              <CartesianGrid stroke={RULE} horizontal={false} />
+              <XAxis
+                type="number"
+                {...axis}
+                tickFormatter={(value: number) => moneyCompact(value)}
+              />
+              <YAxis
+                type="category"
+                dataKey="category"
+                {...axis}
+                width={86}
+                tick={{ fill: INK, fontSize: 12 }}
+              />
+              <Tooltip
+                cursor={{ fill: 'rgba(16,22,29,0.04)' }}
+                content={({ active, payload, label }) =>
+                  active && payload?.length ? (
+                    <Panel
+                      label={String(label)}
+                      rows={[
+                        {
+                          key: 'Spend',
+                          value: money(Number(payload[0].value)),
+                          swatch: SIGNAL,
+                        },
+                        {
+                          key: 'Jobs',
+                          value: String(payload[0].payload.jobs),
+                        },
+                      ]}
+                    />
+                  ) : null
+                }
+              />
+              <Bar dataKey="cost" radius={[0, 4, 4, 0]} maxBarSize={22}>
+                {chart.map((row) => (
+                  <Cell key={row.category} fill={SIGNAL} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+          <TableTwin
+            caption="Reconditioning spend by category"
+            head={['Category', 'Spend', 'Jobs']}
+            rows={chart.map((row) => [row.category, money(row.cost), String(row.jobs)])}
           />
-          <YAxis
-            type="category"
-            dataKey="category"
-            {...axis}
-            width={86}
-            tick={{ fill: INK, fontSize: 12 }}
-          />
-          <Tooltip
-            cursor={{ fill: 'rgba(16,22,29,0.04)' }}
-            content={({ active, payload, label }) =>
-              active && payload?.length ? (
-                <Panel
-                  label={String(label)}
-                  rows={[
-                    {
-                      key: 'Spend',
-                      value: money(Number(payload[0].value)),
-                      swatch: SIGNAL,
-                    },
-                    {
-                      key: 'Jobs',
-                      value: String(payload[0].payload.jobs),
-                    },
-                  ]}
-                />
-              ) : null
-            }
-          />
-          <Bar dataKey="cost" radius={[0, 4, 4, 0]} maxBarSize={22}>
-            {chart.map((row) => (
-              <Cell key={row.category} fill={SIGNAL} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-      <TableTwin
-        caption="Reconditioning spend by category"
-        head={['Category', 'Spend', 'Jobs']}
-        rows={chart.map((row) => [row.category, money(row.cost), String(row.jobs)])}
-      />
-    </>
+        </>
+      )}
+    </div>
   )
 }
 
@@ -243,55 +249,60 @@ export function VolumeByMonth({ data }: { data: MonthlyPerformance[] }) {
     acquired: Number(row.acquired_count),
     sold: Number(row.sold_count),
   }))
-
-  if (chart.every((row) => row.acquired === 0 && row.sold === 0)) {
-    return <EmptyPlot message="No movement in this window yet." />
-  }
+  const empty = chart.every((row) => row.acquired === 0 && row.sold === 0)
 
   return (
-    <>
-      <ResponsiveContainer width="100%" height={210}>
-        <BarChart data={chart} margin={{ top: 8, right: 4, bottom: 0, left: -20 }} barGap={2}>
-          <CartesianGrid stroke={RULE} vertical={false} />
-          <XAxis dataKey="month" {...axis} />
-          <YAxis {...axis} width={40} allowDecimals={false} />
-          <Tooltip
-            cursor={{ fill: 'rgba(16,22,29,0.04)' }}
-            content={({ active, payload, label }) =>
-              active && payload?.length ? (
-                <Panel
-                  label={String(label)}
-                  rows={payload.map((item) => ({
-                    key: item.name === 'acquired' ? 'Bought' : 'Sold',
-                    value: String(item.value),
-                    swatch: item.name === 'acquired' ? SIGNAL : MARGIN,
-                  }))}
-                />
-              ) : null
-            }
+    <div className="rounded-[var(--radius-card)] border border-rule bg-surface p-5">
+      <p className="eyebrow mb-0.5">Volume — bought vs sold</p>
+      <p className="mb-4 text-[12px] text-ink-soft">Last 6 months</p>
+      {empty ? (
+        <EmptyPlot message="No movement in this window yet." />
+      ) : (
+        <>
+          <ResponsiveContainer width="100%" height={210}>
+            <BarChart data={chart} margin={{ top: 8, right: 4, bottom: 0, left: -20 }} barGap={2}>
+              <CartesianGrid stroke={RULE} vertical={false} />
+              <XAxis dataKey="month" {...axis} />
+              <YAxis {...axis} width={40} allowDecimals={false} />
+              <Tooltip
+                cursor={{ fill: 'rgba(16,22,29,0.04)' }}
+                content={({ active, payload, label }) =>
+                  active && payload?.length ? (
+                    <Panel
+                      label={String(label)}
+                      rows={payload.map((item) => ({
+                        key: item.name === 'acquired' ? 'Bought' : 'Sold',
+                        value: String(item.value),
+                        swatch: item.name === 'acquired' ? SIGNAL : MARGIN,
+                      }))}
+                    />
+                  ) : null
+                }
+              />
+              <Legend
+                verticalAlign="top"
+                align="left"
+                height={28}
+                iconType="square"
+                iconSize={8}
+                formatter={(value) => (
+                  <span className="text-[12px] text-ink-soft">
+                    {value === 'acquired' ? 'Bought' : 'Sold'}
+                  </span>
+                )}
+              />
+              <Bar dataKey="acquired" fill={SIGNAL} radius={[4, 4, 0, 0]} maxBarSize={18} />
+              <Bar dataKey="sold" fill={MARGIN} radius={[4, 4, 0, 0]} maxBarSize={18} />
+            </BarChart>
+          </ResponsiveContainer>
+          <TableTwin
+            caption="Vehicles bought and sold by month"
+            head={['Month', 'Bought', 'Sold']}
+            rows={chart.map((row) => [row.month, String(row.acquired), String(row.sold)])}
           />
-          <Legend
-            verticalAlign="top"
-            align="left"
-            height={28}
-            iconType="square"
-            iconSize={8}
-            formatter={(value) => (
-              <span className="text-[12px] text-ink-soft">
-                {value === 'acquired' ? 'Bought' : 'Sold'}
-              </span>
-            )}
-          />
-          <Bar dataKey="acquired" fill={SIGNAL} radius={[4, 4, 0, 0]} maxBarSize={18} />
-          <Bar dataKey="sold" fill={MARGIN} radius={[4, 4, 0, 0]} maxBarSize={18} />
-        </BarChart>
-      </ResponsiveContainer>
-      <TableTwin
-        caption="Vehicles bought and sold by month"
-        head={['Month', 'Bought', 'Sold']}
-        rows={chart.map((row) => [row.month, String(row.acquired), String(row.sold)])}
-      />
-    </>
+        </>
+      )}
+    </div>
   )
 }
 

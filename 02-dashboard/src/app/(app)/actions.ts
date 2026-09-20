@@ -119,7 +119,12 @@ export async function deleteVehicle(formData: FormData) {
   if (!id) return
 
   const supabase = await createClient()
-  await supabase.from('vehicles').delete().eq('id', id)
+  const { error } = await supabase.from('vehicles').delete().eq('id', id)
+
+  // Only redirect if the delete actually succeeded — silently returning keeps
+  // the user on the current page so they see nothing happened (better than a
+  // redirect with stale data in the list).
+  if (error) return
 
   revalidatePath('/inventory')
   revalidatePath('/')
@@ -162,6 +167,38 @@ export async function createReconJob(
   return { error: null, ok: true }
 }
 
+export async function updateReconJob(
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const id = String(formData.get('id') ?? '')
+  if (!id) return { error: 'Missing job reference.', ok: false }
+
+  const parsed = reconSchema.safeParse({
+    vehicle_id: formData.get('vehicle_id') ?? '',
+    category: formData.get('category') ?? 'mechanical',
+    description: formData.get('description') ?? '',
+    cost: formData.get('cost') ?? '',
+    vendor: formData.get('vendor') ?? '',
+    performed_on: formData.get('performed_on') ?? '',
+    completed: formData.get('completed') ?? 'false',
+  })
+
+  if (!parsed.success) return { error: parsed.error.issues[0].message, ok: false }
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('reconditioning_jobs')
+    .update(parsed.data)
+    .eq('id', id)
+
+  if (error) return { error: error.message, ok: false }
+
+  revalidatePath(`/inventory/${parsed.data.vehicle_id}`)
+  revalidatePath('/')
+  return { error: null, ok: true }
+}
+
 export async function toggleReconJob(formData: FormData) {
   const id = String(formData.get('id') ?? '')
   const vehicleId = String(formData.get('vehicle_id') ?? '')
@@ -169,10 +206,12 @@ export async function toggleReconJob(formData: FormData) {
   if (!id) return
 
   const supabase = await createClient()
-  await supabase
+  const { error } = await supabase
     .from('reconditioning_jobs')
     .update({ completed: !completed })
     .eq('id', id)
+
+  if (error) return
 
   revalidatePath(`/inventory/${vehicleId}`)
 }
@@ -183,7 +222,9 @@ export async function deleteReconJob(formData: FormData) {
   if (!id) return
 
   const supabase = await createClient()
-  await supabase.from('reconditioning_jobs').delete().eq('id', id)
+  const { error } = await supabase.from('reconditioning_jobs').delete().eq('id', id)
+
+  if (error) return
 
   revalidatePath(`/inventory/${vehicleId}`)
   revalidatePath('/')

@@ -236,7 +236,7 @@ function Dialog({
       <dialog
         ref={ref}
         onClose={close}
-        className="w-full max-w-lg rounded-[4px] border border-rule bg-surface p-6 shadow-xl backdrop:bg-ink/30 backdrop:backdrop-blur-sm"
+        className="m-auto w-full max-w-lg rounded-[4px] border border-rule bg-surface p-6 shadow-xl backdrop:bg-ink/30 backdrop:backdrop-blur-sm"
       >
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-[15px] font-semibold">{title}</h2>

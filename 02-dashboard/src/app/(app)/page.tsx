@@ -116,9 +116,7 @@ export default async function OverviewPage() {
         <div className="mb-8 grid gap-5 lg:grid-cols-2">
           <MarginByMonth data={monthly} />
           <ReconSpend data={recon} />
-          <div className="lg:col-span-2">
-            <VolumeByMonth data={monthly} />
-          </div>
+          <div className="lg:col-span-2"><VolumeByMonth data={monthly} /></div>
         </div>
       ) : (
         <div className="mb-8 rounded-[var(--radius-card)] border border-rule bg-surface px-8 py-16 text-center">
