@@ -258,3 +258,40 @@ export async function updateProfile(
   revalidatePath('/', 'layout')
   return { error: null, ok: true }
 }
+
+export async function uploadAvatar(
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const file = formData.get('avatar') as File | null
+  if (!file || file.size === 0) return { error: 'No file selected.', ok: false }
+  if (file.size > 2 * 1024 * 1024) return { error: 'Image must be under 2 MB.', ok: false }
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type))
+    return { error: 'Only JPEG, PNG, or WebP allowed.', ok: false }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.', ok: false }
+
+  const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
+  const path = `${user.id}/avatar.${ext}`
+  const bytes = await file.arrayBuffer()
+
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(path, bytes, { contentType: file.type, upsert: true })
+
+  if (uploadError) return { error: uploadError.message, ok: false }
+
+  const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+
+  const { error: dbError } = await supabase
+    .from('profiles')
+    .update({ avatar_url: publicUrl + '?t=' + Date.now() })
+    .eq('id', user.id)
+
+  if (dbError) return { error: dbError.message, ok: false }
+
+  revalidatePath('/profile')
+  return { error: null, ok: true }
+}
