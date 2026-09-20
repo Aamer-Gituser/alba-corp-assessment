@@ -8,7 +8,7 @@ Updated 2026-09-20 (Asia/Kolkata). **Planning review complete; implementation an
 
 The desired reviewer experience: understand the product in five seconds, change a date without instructions, share that exact view, and see that errors are handled deliberately. A short backend explanation then demonstrates key custody, caching, validation and bounded retries.
 
-The product is not complete today. The homepage remains the Next.js starter; useful components and a NASA client exist but are not composed into a working archive.
+The product is not complete today. A composed archive page now exists, but it was committed while this review was in progress. It has not yet passed the backend-contract, accessibility, cross-browser, secret, production, or delivery checks in this pack.
 
 ## Read in this order
 
@@ -75,6 +75,6 @@ Record unknown earlier time as unknown until the candidate supplies an honest es
 - Keep NASA/Apogee and the existing Next.js stack; avoid restarting a scaffold.
 - Verify upstream compatibility before polishing. A recent NASA documentation change makes the existing image assumptions unsafe.
 - Keep runtime changes inside `01-web-app`; this chat may also edit the linked Task 1 plan. Do not change the root repo, remotes, shared rules, Task 2 or Task 3 without coordination.
-- Preserve the existing nested Git history. Separate repositories are accepted by the brief; a monorepo is a preference, not a reason to delete `.git`.
+- Preserve the existing root Git history and current working tree. Do not delete or reinitialize `.git`.
 - No deployment, submission, credential changes or application-code edits were performed by this documentation review.
 - When development is finished, use [Verification](04-VERIFICATION.md). Verification findings then drive the final video wording; interview preparation follows the actual submitted revision.

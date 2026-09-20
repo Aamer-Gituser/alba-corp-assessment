@@ -71,7 +71,7 @@ export function FocalPlate({ plate }: { plate: Apod }) {
           <div className="text-[--arctic] font-semibold mb-4">Telemetry</div>
           <MetaRow label="Medium" value={isVideo ? "Video Stream" : "Photograph"} />
           <MetaRow label="Filed"  value={formatIndexDate(plate.date)} />
-          <MetaRow label="Credit" value={plate.copyright ? "Attributed" : "Public domain"} />
+          <MetaRow label="Credit" value={plate.copyright ? plate.copyright.replace(/\s+/g, " ").trim() : "See source for image credit"} />
         </dl>
       </div>
     </article>

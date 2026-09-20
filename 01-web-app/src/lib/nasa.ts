@@ -30,10 +30,10 @@ const MAX_ATTEMPTS = 3;
 const BASE_BACKOFF_MS = 400;
 const MAX_BACKOFF_MS = 4_000;
 
-/** A plate that is already published can never change, so cache it for a year. */
-const IMMUTABLE_TTL_SECONDS = 60 * 60 * 24 * 365;
+/** Historical plates have low churn but are not truly immutable; cache for 24h. */
+const IMMUTABLE_TTL_SECONDS = 60 * 60 * 24;
 /** Today's plate can still be revised or published late. Re-check periodically. */
-const TODAY_TTL_SECONDS = 60 * 15;
+const TODAY_TTL_SECONDS = 60 * 5;
 
 /** Historical dates are immutable; today is not. */
 function cacheTtlFor(date: string): number {
@@ -70,41 +70,100 @@ function buildUrl(params: Record<string, string>): string {
  * Returns the parsed body on success. On failure it returns a typed error
  * rather than throwing, so callers must decide what the UI should say.
  */
+/**
+ * Parse a Retry-After header value into milliseconds.
+ * Handles both integer-seconds ("120") and HTTP-date ("Fri, 01 Jan 2027 00:00:00 GMT").
+ */
+function parseRetryAfterMs(value: string | null): number | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  // Integer seconds
+  if (/^\d+$/.test(trimmed)) {
+    const ms = parseInt(trimmed, 10) * 1000;
+    return Number.isFinite(ms) ? ms : null;
+  }
+  // HTTP-date format
+  const parsed = Date.parse(trimmed);
+  if (!Number.isNaN(parsed)) {
+    return Math.max(0, parsed - Date.now());
+  }
+  return null;
+}
+
+/** Validate raw JSON matches the expected Apod shape. */
+function isValidApod(v: unknown): v is import("./types").Apod {
+  if (typeof v !== "object" || v === null) return false;
+  const o = v as Record<string, unknown>;
+  return (
+    typeof o.date === "string" &&
+    typeof o.title === "string" &&
+    typeof o.explanation === "string" &&
+    typeof o.media_type === "string" &&
+    typeof o.url === "string"
+  );
+}
+
 async function requestApod<T>(
   params: Record<string, string>,
   ttlSeconds: number,
 ): Promise<Result<T>> {
+  if (API_KEY === "DEMO_KEY" && process.env.NODE_ENV === "production") {
+    console.warn("[nasa] DEMO_KEY in use in production — set NASA_API_KEY for a higher rate limit.");
+  }
+
   let lastStatus = 0;
+  const budgetStart = Date.now();
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const controller = new AbortController();
+    const timeoutHandle = setTimeout(() => controller.abort(), 4000);
+
     try {
       const response = await fetch(buildUrl(params), {
         // Next's Data Cache. A cache hit never touches NASA, which is what keeps
         // the app inside the rate limit under normal traffic.
         next: { revalidate: ttlSeconds },
         headers: { Accept: "application/json" },
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutHandle);
+
       if (response.ok) {
-        return ok((await response.json()) as T);
+        const raw: unknown = await response.json();
+        // Validate shape at runtime so callers get a typed error on bad formats.
+        if (Array.isArray(raw)) {
+          if (!raw.every(isValidApod)) return err({ kind: "invalid_response" });
+        } else {
+          if (!isValidApod(raw)) return err({ kind: "invalid_response" });
+        }
+        return ok(raw as T);
       }
 
       lastStatus = response.status;
 
+      if (response.status === 403) {
+        return err({ kind: "configuration" });
+      }
+
       if (response.status === 429) {
-        const retryAfter = Number(response.headers.get("retry-after"));
+        const waitMs = parseRetryAfterMs(response.headers.get("retry-after"));
         // Out of attempts: surface the wait NASA asked for instead of hiding it.
         if (attempt === MAX_ATTEMPTS) {
           return err({
             kind: "rate_limited",
-            retryAfterSeconds: Number.isFinite(retryAfter) ? retryAfter : undefined,
+            retryAfterSeconds: waitMs != null ? Math.ceil(waitMs / 1000) : undefined,
           });
         }
-        // Honour Retry-After when present, but never block a request for minutes.
-        const wait = Number.isFinite(retryAfter)
-          ? Math.min(retryAfter * 1000, MAX_BACKOFF_MS)
-          : backoffDelay(attempt);
-        await sleep(wait);
+        const effectiveWait = waitMs ?? backoffDelay(attempt);
+        // If waiting would exhaust the total budget, give up immediately.
+        if (Date.now() - budgetStart + effectiveWait > 12000) {
+          return err({
+            kind: "rate_limited",
+            retryAfterSeconds: waitMs != null ? Math.ceil(waitMs / 1000) : undefined,
+          });
+        }
+        await sleep(effectiveWait);
         continue;
       }
 
@@ -122,7 +181,14 @@ async function requestApod<T>(
       }
 
       await sleep(backoffDelay(attempt));
-    } catch {
+    } catch (e) {
+      clearTimeout(timeoutHandle);
+      // AbortError means our timeout fired.
+      if (e instanceof Error && e.name === "AbortError") {
+        if (attempt === MAX_ATTEMPTS) return err({ kind: "timeout" });
+        await sleep(backoffDelay(attempt));
+        continue;
+      }
       // Network-level failure: DNS, TLS, socket reset, or a dropped connection.
       if (attempt === MAX_ATTEMPTS) return err({ kind: "network" });
       await sleep(backoffDelay(attempt));

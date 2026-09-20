@@ -5,16 +5,17 @@ import { useState } from "react";
 
 import { formatIndexDate, plateNumber, precedingWindow } from "@/lib/dates";
 import { posterImage } from "@/lib/plates";
-import type { Apod } from "@/lib/types";
+import type { Apod, ApodError } from "@/lib/types";
 
 import { EmptyNotice } from "./notices";
 import { PlateImage } from "./plate-image";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 8;
 
 type ArchiveStripProps = {
   focalDate: string;
   initialPlates: Apod[];
+  archiveError?: ApodError;
 };
 
 /**
@@ -24,8 +25,8 @@ type ArchiveStripProps = {
  * arrival. Further pages are fetched from our own route handler, which means
  * the browser still never learns the NASA key or talks to NASA directly.
  */
-export function ArchiveStrip({ focalDate, initialPlates }: ArchiveStripProps) {
-  const [plates, setPlates] = useState(initialPlates);
+export function ArchiveStrip({ focalDate, initialPlates, archiveError }: ArchiveStripProps) {
+  const [plates, setPlates] = useState(initialPlates.slice(0, PAGE_SIZE));
   const [status, setStatus] = useState<"idle" | "loading" | "exhausted">("idle");
   const [failure, setFailure] = useState<string | null>(null);
 
@@ -69,7 +70,13 @@ export function ArchiveStrip({ focalDate, initialPlates }: ArchiveStripProps) {
     return (
       <section className="mt-16">
         <SectionHeading />
-        <EmptyNotice message="No earlier plates are on file for this range" />
+        {archiveError ? (
+          <p role="alert" className="mt-6 font-[family-name:var(--font-geist-mono)] text-[11px] uppercase tracking-[0.18em] text-[--text-2]">
+            Archive contact sheet unavailable · {archiveError.kind}
+          </p>
+        ) : (
+          <EmptyNotice message="No earlier plates are on file for this range" />
+        )}
       </section>
     );
   }

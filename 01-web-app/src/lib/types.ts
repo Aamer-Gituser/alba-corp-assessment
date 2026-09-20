@@ -30,7 +30,28 @@ export type ApodError =
   | { kind: "out_of_range"; date: string }
   | { kind: "invalid_date"; date: string }
   | { kind: "upstream"; status: number }
-  | { kind: "network" };
+  | { kind: "network" }
+  | { kind: "invalid_response" }
+  | { kind: "configuration" }
+  | { kind: "timeout" };
+
+/**
+ * Normalised plate model used by UI components.
+ *
+ * This decouples the UI from the raw NASA API shape so that changes to the
+ * upstream format only require a single mapping step.
+ */
+export type Plate = {
+  date: string;
+  title: string;
+  explanationText: string;
+  mediaType: "image" | "video" | "other";
+  imageUrl: string | null;
+  sourceUrl: string;
+  hdImageUrl: string | null;
+  alt: string;
+  creditText: string | null;
+};
 
 /**
  * Result instead of throw.
@@ -83,6 +104,21 @@ export function describeError(error: ApodError): {
       return {
         title: "Could not reach the archive",
         detail: "Check your connection, then try again.",
+      };
+    case "invalid_response":
+      return {
+        title: "Upstream data could not be read",
+        detail: "The archive returned an unrecognised format.",
+      };
+    case "configuration":
+      return {
+        title: "Service unavailable",
+        detail: "Check the deployment configuration.",
+      };
+    case "timeout":
+      return {
+        title: "Archive took too long to respond",
+        detail: "The request timed out. Try again shortly.",
       };
   }
 }

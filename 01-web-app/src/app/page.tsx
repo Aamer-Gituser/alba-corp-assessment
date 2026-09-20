@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { clampToArchive, isValidDateString, precedingWindow, todayInArchiveTime } from "@/lib/dates";
 import { getPlate, getPlateRange } from "@/lib/nasa";
 
-const ARCHIVE_PAGE_SIZE = 12;
+const ARCHIVE_PAGE_SIZE = 8;
 
 /**
  * The archive, composed on the server.
@@ -47,6 +47,7 @@ export default async function ArchivePage({
       <ArchiveStrip
         focalDate={focalDate}
         initialPlates={archiveResult.ok ? archiveResult.data : []}
+        archiveError={archiveResult.ok ? undefined : archiveResult.error}
       />
 
       <footer className="mt-20 border-t border-plate-edge pt-6">

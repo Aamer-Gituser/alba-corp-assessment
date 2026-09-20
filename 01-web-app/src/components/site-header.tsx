@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
@@ -36,12 +37,12 @@ export function SiteHeader({ date }: SiteHeaderProps) {
       <div className="max-w-[1120px] mx-auto px-6 sm:px-8 h-[52px] flex items-center justify-between">
 
         {/* Brand */}
-        <a
+        <Link
           href="/"
           className="font-[family-name:var(--font-fraunces)] text-xl tracking-[0.35em] uppercase text-white hover:text-[--text-1] transition-colors"
         >
           Apogee
-        </a>
+        </Link>
 
         {/* Date navigation */}
         <div className="hidden sm:flex items-center gap-2">
