@@ -7,7 +7,7 @@ type PlateImageProps = {
   src: string | null;
   alt: string;
   sizes: string;
-  priority?: boolean;
+  preload?: boolean;
   /** Video entries get a marker, since their poster is a still of a moving plate. */
   isVideo?: boolean;
 };
@@ -24,7 +24,7 @@ type PlateImageProps = {
  * outcome: NASA's older entries occasionally point at images that no longer
  * exist, and a permanently-shimmering box would be a lie.
  */
-export function PlateImage({ src, alt, sizes, priority, isVideo }: PlateImageProps) {
+export function PlateImage({ src, alt, sizes, preload, isVideo }: PlateImageProps) {
   const [status, setStatus] = useState<"loading" | "ready" | "failed">(
     src ? "loading" : "failed",
   );
@@ -52,7 +52,7 @@ export function PlateImage({ src, alt, sizes, priority, isVideo }: PlateImagePro
           alt={alt}
           fill
           sizes={sizes}
-          priority={priority}
+          preload={preload}
           className={`object-cover ${status === "ready" ? "animate-develop" : "opacity-0"}`}
           onLoad={() => setStatus("ready")}
           onError={() => setStatus("failed")}

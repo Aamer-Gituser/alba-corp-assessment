@@ -57,10 +57,11 @@ export function FocalPlate({ plate }: { plate: Apod }) {
           onKeyDown={(e) => !isVideo && e.key === "Enter" && setLightboxOpen(true)}
         >
           <PlateImage
+            key={poster ?? "missing"}
             src={poster}
             alt={plate.title}
             isVideo={isVideo}
-            priority
+            preload
             sizes="(min-width: 1280px) 1120px, 100vw"
           />
 

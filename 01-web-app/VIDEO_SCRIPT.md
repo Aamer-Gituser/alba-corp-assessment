@@ -1,112 +1,81 @@
-# Video Script — Task 01: Apogee
+# Apogee — Final Task 1 video script
 
-**Total target:** 3–4 minutes  
-**Format:** Screen recording with voiceover
+**Target length:** 3–4 minutes
+**Recording order:** record only after deployment and browser verification
 
----
+## Before recording
 
-## Recording Checklist (do before pressing record)
+- Open the public URL in a fresh private window.
+- Keep browser zoom at 100% and silence notifications.
+- Prepare `1969-07-20` for date navigation.
+- Prepare one video or non-image APOD date from the verified evidence register.
+- Keep the README, build log, and evidence register available in a second tab.
+- Do not show API keys, `.env.local`, private dashboards, or unredacted logs.
 
-- [ ] Open incognito window at the live Vercel URL
-- [ ] DevTools closed (open when needed, not at start)
-- [ ] Browser zoom at 100%
-- [ ] Mic tested, notifications silenced
-- [ ] Prepare a date to jump to: `1969-07-20` (Moon landing day)
-- [ ] Prepare a video date: `2023-11-27` (or any recent video entry)
-- [ ] Have DevTools → Network tab ready to open
+## 0:00–0:25 — Introduction
 
----
+> “This is Apogee, a date-addressable archive built around NASA’s Astronomy Picture of the Day API. A visitor can travel to any supported date, read the context for that entry, and share the exact view through the URL.”
 
-## Beat Sheet
+> “The visual language is intentionally closer to an observatory catalogue than a dashboard: a dark plate surface, restrained cyan and amber signals, large editorial typography, and a fixed contact sheet for nearby dates.”
 
-### [0:00 – 0:20] Hook & intro
+Show the landing page and let the focal media finish loading.
 
-> "This is Apogee. Every day since June 1995, NASA has published one photograph of the universe. This app lets you travel to any date and see the one from that day."
+## 0:25–1:05 — Core product flow
 
-_Scroll slowly down the current page — show the plate developing into a sharp image._
+> “I’ll jump to July 20th, 1969. The URL now contains `?date=1969-07-20`, so this exact plate is bookmarkable and shareable.”
 
-> "Notice the image — it arrives dark and grainy, like a plate in a developing bath, and resolves into the photograph. That's the loading state. There's no spinner. I'll show you why in a moment."
+Use the date picker, then show previous and next navigation.
 
----
+> “Previous and next keep the URL as the source of truth. The current date disables Next, and the first archive date disables Previous.”
 
-### [0:20 – 1:05] Live demo
+Scroll to the contact sheet.
 
-**Step 1 — Jump to a specific date**
+> “The archive window is deliberately bounded to eight nearby entries. That keeps the page predictable and avoids an unbounded load-more list. Every card links to its own deep URL.”
 
-> "Let me navigate to July 20th, 1969 — the day of the Apollo moon landing."
+## 1:05–1:45 — Media and failure states
 
-_Click the date input in DateNavigator, type `1969-07-20`, press enter._
+Open the verified video/non-image entry.
 
-> "The URL changed to `?date=1969-07-20`. That's a shareable link — bookmark it, send it to someone, it always loads this exact plate."
+> “APOD is not always a still image. Image entries use the best available still source. Video or other media gets a deliberate placeholder and a source action, so the UI never presents a video as a broken photograph.”
 
-**Step 2 — Previous/next navigation**
+Show the relevant credit/source metadata.
 
-> "I can step forward and backward. Each navigation is a new URL, so browser history works normally."
+> “When NASA does not provide a copyright field, the app says ‘See source for image credit’. It does not guess that the image is public domain.”
 
-_Click prev and next a couple of times._
+Show the documented error or loading state if available.
 
-**Step 3 — Random plate**
+> “Loading, rate limiting, timeout, invalid response, configuration, and empty states each have an actionable message. An upstream failure is never silently converted into an empty archive.”
 
-> "Random drops me into a random date in the 30-year archive."
+## 1:45–2:30 — What I’m proud of: the backend boundary
 
-_Click Random ×2._
+> “The part I’m most proud of is the server boundary. The browser never receives the NASA API key and never calls the credentialed NASA endpoint directly.”
 
-**Step 4 — Load earlier plates**
+Open DevTools Network only if the production evidence has been captured.
 
-> "Below the focal plate is the preceding grid. I'll load more."
+> “The page talks to our own server-rendered route. The NASA adapter imports `server-only`, so importing it from a client component becomes a build error. The credential is protected structurally, not just by convention.”
 
-_Scroll down, click "Load earlier plates"._
+> “The adapter validates and normalizes the upstream payload before the UI sees it. Historical entries use a 24-hour cache and the current day uses a five-minute cache. Requests have a four-second attempt timeout, at most three attempts, and a twelve-second total budget. `Retry-After` supports both seconds and HTTP-date values.”
 
-> "12 more cards appeared. Each one links to that date."
+Show the relevant source files briefly: `src/lib/nasa.ts`, `src/lib/plates.ts`, and `src/app/api/apod/route.ts`.
 
----
+## 2:30–3:20 — Bugs I found and fixed
 
-### [1:05 – 2:05] The part I'm proud of: the BFF
+> “The most important bug was the meaning of ‘today’. Using UTC could request tomorrow before NASA had published that entry. I fixed it with the archive’s US Eastern timezone.”
 
-> "Here's what I'm most proud of — open DevTools, go to Network, filter by `nasa.gov`."
+> “Another build issue came from putting `posterImage()` in the server-only NASA file while the client contact sheet needed it. I moved the pure media helper into its own module, keeping secrets server-only.”
 
-_Open DevTools → Network → filter `nasa.gov`._
+> “I also fixed image state that could remain failed after the date changed, an archive strip that could retain stale initial data, and a retry path that could retry immediately when `Retry-After` was missing.”
 
-> "Nothing. The browser makes zero requests to NASA. All data comes from our own `/api/apod` endpoint."
+> “During the audit I found two misleading product assumptions: a missing copyright field is not proof of public-domain rights, and a date URL alone should not be claimed as the brief’s separate search-and-filter advanced option. The final submission claims one advanced option honestly: the own backend boundary.”
 
-_Show the request to `/api/apod` in the Network tab._
+## 3:20–3:45 — Verification and limitations
 
-> "The reason: `src/lib/nasa.ts` starts with `import 'server-only'`. That's not just a naming convention — if you accidentally import that module from a Client Component, it's a build error. The API key is structurally incapable of reaching the browser."
+> “The final local verification is clean: lint, typecheck, production build, and 13 focused unit tests pass. The evidence register records the remaining production checks separately.”
 
-> "There are two cache TTLs. A photograph from 2011 will never change, so I cache it for a year — `revalidate: 31536000`. Today's plate might still be published or revised, so it gets 15 minutes. That's the dual-TTL cache, and it's what keeps the app inside NASA's rate limit under normal traffic."
+> “The remaining limitation is intentional scope: this is a focused archive viewer, not an account system, CMS, infinite feed, or multi-API product. With more time I would add end-to-end browser coverage and production observability.”
 
-> "If NASA returns 429 — rate limited — there's exponential backoff with jitter and up to 3 retries. The `Retry-After` header is honoured."
+Show the public URL, repository, README, build log, and evidence register.
 
----
+## Closing line
 
-### [2:05 – 2:45] The part that fought me: Eastern time
-
-> "The hardest bug was silent. I called `new Date().toISOString().slice(0,10)` to get 'today' — the most natural thing to do. But NASA publishes on US Eastern time. In UTC+4, the UTC date is already tomorrow. Requesting a future date returns 404."
-
-> "The fix is `Intl.DateTimeFormat` with `timeZone: 'America/New_York'`. One line, but it took a failed request to spot. I've documented it in the build log and the README's API quirks section."
-
----
-
-### [2:45 – 3:10] States demo
-
-> "Let me show the states. Throttle the network to Slow 4G."
-
-_DevTools → Network → throttle to Slow 4G, navigate to a new date._
-
-> "The plate arrives undeveloped — dark, grainy, with a safelight sweep — and then resolves. That's the same animation as the initial load, so it reads as one continuous exposure."
-
-_Go offline in DevTools, click "Load earlier plates"._
-
-> "Offline: inline alert, no crash, the existing plates stay."
-
-_Restore network, remove throttle._
-
----
-
-### [3:10 – 3:30] Limitations & what's next
-
-> "Honest limitations: no end-to-end tests, the 'load earlier plates' button doesn't do windowed scroll so the DOM grows indefinitely, and there's no offline support."
-
-> "What I'd do next: add virtual scrolling with `react-window`, a keyboard shortcut to jump to a date, and a 'plate of the day' email with the video script running on a cron in n8n — which is actually Task 3 of this assessment."
-
-> "Code is at `github.com/Aamer-Gituser/alba-corp-assessment`."
+> “Apogee is small by design: one useful archive experience, one defensible backend boundary, clear failure states, and enough documentation that another engineer can verify every important decision.”

@@ -12,7 +12,7 @@ import { describeError } from "@/lib/types";
  */
 
 /** How many days a single request may ask for. Bounds the upstream cost. */
-const MAX_RANGE_DAYS = 40;
+const MAX_RANGE_DAYS = 8;
 
 /** Maps a failure kind to the HTTP status that honestly describes it. */
 const STATUS_BY_ERROR_KIND: Record<string, number> = {

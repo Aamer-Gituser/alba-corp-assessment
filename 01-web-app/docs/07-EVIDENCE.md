@@ -17,19 +17,19 @@ Planning review: 2026-09-20. Planned work is not completed evidence.
 | Contrast | Graphite 5.85:1 black / 5.41 slate; amber 9.37/8.66; cyan 8.46/7.81; opacity variants pending |
 | Live API | Direct probe failed in environment; no deployed payload claim |
 | UI skill | Written checklist used; optional search script unavailable; no generated design system claim |
-| Unit tests | 2026-09-20: `npm.cmd test` passed, 1 file / 13 tests; the initial sandbox run could not spawn a worker, and the unrestricted rerun passed |
+| Unit tests | 2026-09-20: `npm.cmd test` passed, 1 file / 13 tests; unrestricted rerun used because the sandbox cannot spawn Vitest workers |
 | Production build | 2026-09-20: `npm.cmd run build` passed on Next.js 16.3.5 |
-| Lint | 2026-09-20: failed — `site-header.tsx` uses a local `<a href="/">`; two unused-import warnings remain in `archive-strip.tsx` and `site-header.tsx` |
+| Lint | 2026-09-20: `npm.cmd run lint` passed with zero errors and warnings |
 
 ## Fill after implementation
 
 | Gate | Method/result | Status |
 |---|---|---|
 | Five redacted API fixture classes | | Pending |
-| Tests | `npm run test` | Baseline pass; rerun after implementation |
-| Lint | `npm run lint` | Baseline fail; fix and rerun |
+| Tests | `npm run test` | Fresh pass: 13/13 |
+| Lint | `npm run lint` | Fresh pass |
 | Type check | `npm run typecheck` | Pending |
-| Build | `npm run build` | Baseline pass; rerun after implementation |
+| Build | `npm run build` | Fresh pass |
 | Functional matrix | `docs/04-VERIFICATION.md` | Pending |
 | Accessibility/responsive/motion | manual | Pending |
 | Lighthouse | production mobile | Pending |

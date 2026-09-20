@@ -7,7 +7,6 @@ import { useTransition } from "react";
 import {
   ARCHIVE_START,
   clampToArchive,
-  formatIndexDate,
   plateNumber,
   randomArchiveDate,
   shiftDate,

@@ -57,7 +57,7 @@ export default async function ArchivePage({
               About this archive
             </p>
             <p className="max-w-md font-[family-name:var(--font-geist-sans)] text-xs leading-relaxed text-white/40">
-              Apogee is a date-addressable archive of NASA's Astronomy Picture of the Day (APOD), curated for discovery and contemplation of the cosmos.
+              Apogee is a date-addressable archive of NASA&apos;s Astronomy Picture of the Day (APOD), curated for discovery and contemplation of the cosmos.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:text-right">

@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 
-import { formatIndexDate, plateNumber, precedingWindow } from "@/lib/dates";
+import { formatIndexDate } from "@/lib/dates";
 import { posterImage } from "@/lib/plates";
 import type { Apod, ApodError } from "@/lib/types";
 
@@ -21,50 +20,12 @@ type ArchiveStripProps = {
 /**
  * The plates filed immediately before the one in focus.
  *
- * The first page is rendered on the server so the grid is never empty on
- * arrival. Further pages are fetched from our own route handler, which means
- * the browser still never learns the NASA key or talks to NASA directly.
+ * The fixed contact sheet is rendered on the server so the grid is populated
+ * on arrival. It is intentionally bounded to eight entries for predictable
+ * performance and a calm catalogue layout.
  */
 export function ArchiveStrip({ focalDate, initialPlates, archiveError }: ArchiveStripProps) {
-  const [plates, setPlates] = useState(initialPlates.slice(0, PAGE_SIZE));
-  const [status, setStatus] = useState<"idle" | "loading" | "exhausted">("idle");
-  const [failure, setFailure] = useState<string | null>(null);
-
-  const oldest = plates.at(-1)?.date ?? focalDate;
-
-  async function loadOlder() {
-    setStatus("loading");
-    setFailure(null);
-
-    const { start, end } = precedingWindow(oldest, PAGE_SIZE);
-    if (end < start) {
-      setStatus("exhausted");
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/apod?start=${start}&end=${end}`);
-      const body = await response.json();
-
-      if (!response.ok) {
-        setFailure(body?.error?.detail ?? "The archive could not be read.");
-        setStatus("idle");
-        return;
-      }
-
-      const older: Apod[] = body.plates ?? [];
-      if (older.length === 0) {
-        setStatus("exhausted");
-        return;
-      }
-
-      setPlates((current) => [...current, ...older]);
-      setStatus("idle");
-    } catch {
-      setFailure("Could not reach the archive. Check your connection.");
-      setStatus("idle");
-    }
-  }
+  const plates = initialPlates.slice(0, PAGE_SIZE);
 
   if (plates.length === 0) {
     return (
@@ -75,7 +36,7 @@ export function ArchiveStrip({ focalDate, initialPlates, archiveError }: Archive
             Archive contact sheet unavailable · {archiveError.kind}
           </p>
         ) : (
-          <EmptyNotice message="No earlier plates are on file for this range" />
+          <EmptyNotice message={`No earlier plates are on file before ${focalDate}`} />
         )}
       </section>
     );
@@ -116,6 +77,7 @@ export function ArchiveStrip({ focalDate, initialPlates, archiveError }: Archive
                 ) : (
                   <div className="w-full h-full transition-transform duration-500 ease-out group-hover:scale-105">
                     <PlateImage
+                      key={posterImage(plate) ?? "missing"}
                       src={posterImage(plate)}
                       alt={plate.title}
                       isVideo={false}
@@ -137,28 +99,9 @@ export function ArchiveStrip({ focalDate, initialPlates, archiveError }: Archive
         ))}
       </ul>
 
-      {failure && (
-        <p role="alert" className="mt-4 font-[family-name:var(--font-geist-mono)] text-[11px] uppercase tracking-[0.18em] text-[--text-2]">
-          {failure}
-        </p>
-      )}
-
-      <div className="mt-10 flex justify-center">
-        {status === "exhausted" ? (
-          <p className="font-[family-name:var(--font-geist-mono)] text-[10px] uppercase tracking-[0.28em] text-[--text-2]">
-            End of the archive
-          </p>
-        ) : (
-          <button
-            type="button"
-            onClick={loadOlder}
-            disabled={status === "loading"}
-            className="px-8 py-2.5 text-sm font-[family-name:var(--font-geist-mono)] tracking-wider liquid-glass rounded-full text-white/60 hover:text-white hover:border-[#e8b057]/50 hover:shadow-[0_0_20px_rgba(232,176,87,0.2)] transition-all duration-300 disabled:opacity-40"
-          >
-            {status === "loading" ? "Loading…" : "Load earlier plates"}
-          </button>
-        )}
-      </div>
+      <p className="mt-10 text-center font-[family-name:var(--font-geist-mono)] text-[10px] uppercase tracking-[0.28em] text-[--text-2]">
+        End of this archive window
+      </p>
     </section>
   );
 }

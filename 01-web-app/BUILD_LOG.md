@@ -8,7 +8,7 @@ _Written live during the build. Each section appended at its phase boundary._
 
 **Goal:** A polished archive viewer for NASA's APOD, where every view is a shareable link and the API key never leaves the server.
 
-**Scope decision:** Two advanced options — "Your own backend" and "Shareable URL-synced state" — because both are genuinely exercised by the domain, not decorative. The backend story is real: NASA rate-limits at 30 req/hr on DEMO_KEY, and immutable historical images can be cached for a year. The URL-sync story is real: an observatory catalogue without addressable entries is useless.
+**Scope decision:** One advanced option — "Your own backend" — is claimed. The date URL is a core product requirement, not a second advanced search/filter feature. Historical entries use a 24-hour cache because editorial metadata can change; today's entry uses a 5-minute cache.
 
 **Out of scope (recorded here, not hidden):** windowed infinite scroll, multi-API fusion, offline support.
 
@@ -34,7 +34,7 @@ _Written live during the build. Each section appended at its phase boundary._
 Naming the key `NEXT_PUBLIC_NASA_API_KEY` would expose it; not naming it that still lets accidents happen. `import "server-only"` at the top of `nasa.ts` turns any accidental client import into a build error. The key genuinely cannot reach the browser. _Trade-off:_ `posterImage()` had to be split into a separate `plates.ts` file because it's a pure function the client grid needs — it can't live in the server-only module.
 
 **Dual-TTL cache instead of a single TTL**
-Historical plates are immutable — a photo from 2011 will never change. Caching it for 15 minutes wastes bandwidth and risks rate-limiting. Caching it for a year is correct. Today's plate might still be published or revised, so it gets 15 minutes. _Trade-off:_ the TTL logic depends on knowing today's date correctly, which required the Eastern-time fix described in §4.
+Historical plates usually change rarely, but editorial metadata and source links can be revised. They use a 24-hour cache. Today's plate might still be published or revised, so it gets 5 minutes. _Trade-off:_ the TTL logic depends on knowing today's date correctly, which required the Eastern-time fix described in §4.
 
 **`?date=` in the URL instead of React state**
 Any state kept in React is lost on refresh and can't be shared. The archive's whole point is findability — "here's what the sky looked like on my birthday". _Trade-off:_ URL changes trigger a server round-trip (the page is a Server Component), but that's the right trade-off: the result is cached and the page is always shareable.
@@ -60,21 +60,15 @@ The first draft of `nasa.ts` exported `posterImage()` alongside the BFF function
 
 ---
 
-## 5. How I Verified It Works
+## 5. Verification snapshot
 
 | Check | Result |
 |---|---|
-| `npm run build` | ✓ Compiled successfully, zero TS errors |
-| `grep -rl "NASA_API_KEY" .next/static/` | ✓ Empty — key not in client bundle |
-| `npm test` (13 vitest tests) | ✓ All pass |
-| Today's plate loads | ✓ Verified in dev server |
-| `?date=1995-06-16` (first plate) | ✓ Plate 1 renders, prev button disabled |
-| `?date=2099-01-01` | ✓ Silently clamped to today |
-| `?date=banana` | ✓ Silently clamped to today |
-| Load earlier plates | ✓ 12 more appended, no layout shift |
-| Video entry (`?date=2023-11-27`) | ✓ Poster frame + "motion plate" badge |
-| Offline → Load earlier plates | ✓ Inline alert, no crash |
-| Build bundle secrets scan | ✓ Clean |
+| `npm.cmd run build` | ✓ Fresh run passed, zero TypeScript errors |
+| `npm.cmd run lint` | ✓ Fresh run passed with zero errors/warnings |
+| `npm.cmd test` (13 Vitest tests) | ✓ Fresh unrestricted run passed |
+| Runtime/browser matrix | Pending production URL verification |
+| Secret and browser-network audit | Pending fresh production evidence |
 
 _Lighthouse scores (production build, mobile):_
 Performance: 92 · Accessibility: 97 · Best Practices: 100 · SEO: 100
@@ -84,7 +78,7 @@ Performance: 92 · Accessibility: 97 · Best Practices: 100 · SEO: 100
 ## 6. Known Limitations
 
 - No automated end-to-end tests (Playwright)
-- "Load earlier plates" is a button, not windowed infinite scroll — the grid grows unboundedly
+- Contact sheet is intentionally fixed to eight nearby entries; it does not paginate
 - No offline/service-worker support
 - Archive grid re-fetches on focal-date change rather than merging in-memory cache
 - `DEMO_KEY` fallback will 429 under classroom load (multiple people on the same IP)
@@ -95,12 +89,23 @@ Performance: 92 · Accessibility: 97 · Best Practices: 100 · SEO: 100
 
 | Phase | Planned | Actual |
 |---|---|---|
-| Monorepo skeleton + git setup | 15 min | 10 min |
-| BFF layer (nasa.ts, plates.ts, route.ts) verify + tests | 30 min | 25 min |
+| Monorepo skeleton + git setup | 15 min | inherited from earlier work |
+| BFF layer (nasa.ts, plates.ts, route.ts) verify + tests | 30 min | inherited plus continuation fixes |
 | Archive strip + site header | 20 min | 15 min |
 | Page composition + loading/error | 20 min | 15 min |
 | Build verify + secrets scan | 10 min | 10 min |
 | Docs (README, BUILD_LOG, .env.example) | 30 min | 35 min |
 | Deploy + live verification | 25 min | _pending_ |
 | Video script | 30 min | _pending_ |
-| **Total** | **≈3h05m** | **≈1h50m so far** |
+| **Total** | **≈3h05m** | **Earlier time is inherited; continuation verification recorded here** |
+
+## 8. Continuation corrections — 2026-09-20
+
+- Added runtime normalization for upstream APOD payloads and safe HTTPS media URLs.
+- Kept the server-only NASA boundary and added a 4-second attempt timeout with a 12-second retry budget.
+- Corrected Retry-After parsing for seconds and HTTP-date values.
+- Changed historical cache to 24 hours and current-day cache to 5 minutes.
+- Fixed the archive to a maximum eight-item contact sheet and removed unbounded load-more state.
+- Corrected image media fallback to prefer `hdurl`, removed the public-domain assumption, and fixed image state remounting across source changes.
+- Replaced deprecated image `priority` usage with `preload`.
+- Fresh lint, build, and 13 unit tests pass. Production browser verification and deployment remain pending.

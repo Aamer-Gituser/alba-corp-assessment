@@ -3,6 +3,7 @@ import "server-only";
 import type { Apod, Result } from "./types";
 import { err, ok } from "./types";
 import { isValidDateString, isWithinArchive, todayInArchiveTime } from "./dates";
+import { normalizeApod } from "./plates";
 
 /**
  * The backend-for-frontend layer over NASA's APOD API.
@@ -91,18 +92,6 @@ function parseRetryAfterMs(value: string | null): number | null {
 }
 
 /** Validate raw JSON matches the expected Apod shape. */
-function isValidApod(v: unknown): v is import("./types").Apod {
-  if (typeof v !== "object" || v === null) return false;
-  const o = v as Record<string, unknown>;
-  return (
-    typeof o.date === "string" &&
-    typeof o.title === "string" &&
-    typeof o.explanation === "string" &&
-    typeof o.media_type === "string" &&
-    typeof o.url === "string"
-  );
-}
-
 async function requestApod<T>(
   params: Record<string, string>,
   ttlSeconds: number,
@@ -131,13 +120,17 @@ async function requestApod<T>(
 
       if (response.ok) {
         const raw: unknown = await response.json();
-        // Validate shape at runtime so callers get a typed error on bad formats.
         if (Array.isArray(raw)) {
-          if (!raw.every(isValidApod)) return err({ kind: "invalid_response" });
+          const normalized = raw.map(normalizeApod);
+          if (!normalized.every((item): item is Apod => item !== null)) {
+            return err({ kind: "invalid_response" });
+          }
+          return ok(normalized as T);
         } else {
-          if (!isValidApod(raw)) return err({ kind: "invalid_response" });
+          const normalized = normalizeApod(raw);
+          if (!normalized) return err({ kind: "invalid_response" });
+          return ok(normalized as T);
         }
-        return ok(raw as T);
       }
 
       lastStatus = response.status;
@@ -180,18 +173,24 @@ async function requestApod<T>(
         return err({ kind: "upstream", status: response.status });
       }
 
-      await sleep(backoffDelay(attempt));
+      const waitMs = backoffDelay(attempt);
+      if (Date.now() - budgetStart + waitMs > 12000) return err({ kind: "timeout" });
+      await sleep(waitMs);
     } catch (e) {
       clearTimeout(timeoutHandle);
       // AbortError means our timeout fired.
       if (e instanceof Error && e.name === "AbortError") {
         if (attempt === MAX_ATTEMPTS) return err({ kind: "timeout" });
-        await sleep(backoffDelay(attempt));
+        const waitMs = backoffDelay(attempt);
+        if (Date.now() - budgetStart + waitMs > 12000) return err({ kind: "timeout" });
+        await sleep(waitMs);
         continue;
       }
       // Network-level failure: DNS, TLS, socket reset, or a dropped connection.
       if (attempt === MAX_ATTEMPTS) return err({ kind: "network" });
-      await sleep(backoffDelay(attempt));
+      const waitMs = backoffDelay(attempt);
+      if (Date.now() - budgetStart + waitMs > 12000) return err({ kind: "timeout" });
+      await sleep(waitMs);
     }
   }
 
@@ -231,4 +230,3 @@ export async function getPlateRange(start: string, end: string): Promise<Result<
   const plates = Array.isArray(result.data) ? result.data : [];
   return ok([...plates].sort((a, b) => b.date.localeCompare(a.date)));
 }
-
