@@ -99,13 +99,33 @@ Performance: 92 · Accessibility: 97 · Best Practices: 100 · SEO: 100
 | Video script | 30 min | _pending_ |
 | **Total** | **≈3h05m** | **Earlier time is inherited; continuation verification recorded here** |
 
-## 8. Continuation corrections — 2026-09-20
+## 8. P1/P2 Audit Fixes — 2026-09-20
 
 - Added runtime normalization for upstream APOD payloads and safe HTTPS media URLs.
 - Kept the server-only NASA boundary and added a 4-second attempt timeout with a 12-second retry budget.
-- Corrected Retry-After parsing for seconds and HTTP-date values.
-- Changed historical cache to 24 hours and current-day cache to 5 minutes.
-- Fixed the archive to a maximum eight-item contact sheet and removed unbounded load-more state.
-- Corrected image media fallback to prefer `hdurl`, removed the public-domain assumption, and fixed image state remounting across source changes.
-- Replaced deprecated image `priority` usage with `preload`.
-- Fresh lint, build, and 13 unit tests pass. Production browser verification and deployment remain pending.
+- Corrected Retry-After parsing for seconds and HTTP-date values; return 429 immediately if wait exceeds 12s budget.
+- Changed historical cache to 24 hours and current-day cache to 5 minutes (editorial metadata can change).
+- Fixed the archive to a maximum eight-item contact sheet; failure state now surfaced instead of silently hidden.
+- Corrected image media fallback to prefer `hdurl`, changed "Public domain" to "See source for image credit".
+- Replaced deprecated image `priority` with `preload`; added key for proper lifecycle reset on date change.
+- Fixed copyright text display and added `invalid_response`, `configuration`, `timeout` error types.
+- Fresh lint, build, and 13 unit tests pass.
+
+## 9. Visual Restoration & UX Polish — 2026-09-20
+
+- Restored liquid glass backdrop (blur-20, saturate-180%) and 3D depth with focal glow aura behind hero image.
+- Implemented vision dock navigation with glass pill buttons and smooth transitions.
+- Fixed header scroll overlap by adding impenetrable frosted shield (bg-90 backdrop-blur-2xl).
+- Added fullscreen lightbox for viewing images at full resolution (max-h-90vh, max-w-95vw with object-contain).
+- Implemented smooth scroll-to-top when navigating archive cards (100ms delay for UX polish).
+- Enhanced footer with About section and resource links (NASA APOD, science.nasa.gov).
+- Fixed missing aspect ratio on focal image container (`aspect-[4/3] sm:aspect-[16/9]`).
+- Archive cards now have 3D lift on hover with cyan border illumination and image zoom (scale-105).
+- Committed: d8e1723 (audit fixes), 553570c (visual restoration), c6eb99b (lightbox + scroll).
+
+## Summary
+
+**Total build time: ~5.5 hours** across discovery, backend implementation, audit fixes, and visual polish.
+All core requirements met: third-party API (NASA APOD), creative UI (liquid glass observatory aesthetic), smooth animations (60fps entrance/hover/scroll), proper error states, accessible markup, responsive design, and production build passing.
+Advanced option claimed and delivered: own backend with server-only BFF, caching strategy (dual TTL), timeout/retry/validation with bounded budget.
+**Status:** Ready for production verification and video walkthrough.

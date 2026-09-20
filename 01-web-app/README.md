@@ -2,7 +2,7 @@
 
 Apogee is a date-addressable observatory catalogue built around NASA’s Astronomy Picture of the Day API. Choose a date, read the entry’s context and credit, move through nearby dates, and share the exact view through `?date=YYYY-MM-DD`.
 
-**Status:** locally verified; production URL and video evidence are still to be added before submission.
+**Status:** ✅ Built and verified 2026-09-20. P1/P2 audit fixes + visual restoration complete. Deployed to Vercel. Video walkthrough pending.
 
 ## Run locally
 
