@@ -40,7 +40,7 @@ export function DateNavigator({ date }: DateNavigatorProps) {
 
   return (
     <div
-      className="flex flex-wrap items-center gap-2"
+      className="bg-plate-slate/80 backdrop-blur-md border border-plate-edge rounded-lg p-1.5 inline-flex items-center gap-1.5 flex-wrap"
       data-pending={isPending ? "" : undefined}
     >
       <StepButton
@@ -59,7 +59,7 @@ export function DateNavigator({ date }: DateNavigatorProps) {
           min={ARCHIVE_START}
           max={today}
           onChange={(event) => event.target.value && goTo(event.target.value)}
-          className="[color-scheme:dark] cursor-pointer rounded-sm border border-plate-edge bg-plate-slate px-3 py-2 font-mono text-sm text-safelight transition-colors hover:border-safelight/50"
+          className="[color-scheme:dark] cursor-pointer rounded-[4px] border border-plate-edge bg-plate-black/80 px-3 py-1.5 font-mono text-xs text-safelight hover:border-safelight/40 focus:outline-none focus:border-safelight transition-colors duration-200"
         />
       </label>
 
@@ -71,7 +71,7 @@ export function DateNavigator({ date }: DateNavigatorProps) {
         type="button"
         onClick={() => goTo(today)}
         disabled={atEnd}
-        className="rounded-sm border border-plate-edge px-3 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-graphite transition-colors hover:border-safelight/50 hover:text-emulsion disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-plate-edge disabled:hover:text-graphite"
+        className="rounded-[4px] px-2.5 py-1 text-xs font-mono text-graphite hover:text-emulsion disabled:cursor-not-allowed disabled:opacity-35 transition-colors duration-200"
       >
         Today
       </button>
@@ -79,14 +79,14 @@ export function DateNavigator({ date }: DateNavigatorProps) {
       <button
         type="button"
         onClick={() => goTo(randomArchiveDate())}
-        className="rounded-sm border border-safelight/40 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-safelight transition-colors hover:bg-safelight hover:text-plate-black"
+        className="border border-safelight/40 bg-safelight/[0.08] text-safelight hover:bg-safelight/[0.16] rounded-[4px] px-3 py-1 text-xs font-mono uppercase tracking-wider active:scale-95 transition-all duration-200"
       >
         Random plate
       </button>
 
       <span
         aria-live="polite"
-        className={`font-mono text-[11px] uppercase tracking-[0.18em] text-graphite transition-opacity ${
+        className={`font-mono text-[10px] uppercase tracking-[0.15em] text-graphite transition-opacity duration-200 ${
           isPending ? "opacity-100" : "opacity-0"
         }`}
       >
@@ -113,7 +113,7 @@ function StepButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="h-10 w-10 rounded-sm border border-plate-edge text-emulsion transition-colors hover:border-safelight/50 hover:text-safelight disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-plate-edge disabled:hover:text-emulsion"
+      className="h-8 w-8 rounded-[4px] bg-plate-black/60 border border-plate-edge text-emulsion hover:border-safelight/40 hover:text-safelight active:scale-95 flex items-center justify-center transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-plate-edge disabled:hover:text-emulsion"
     >
       {children}
     </button>

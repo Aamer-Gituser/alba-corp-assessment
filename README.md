@@ -1,33 +1,46 @@
-# Alba Corp — Vibe Coder Assessment
+# Alba Corp Vibe Coder Assessment — Aamer Khan
 
-Three tasks, one repo.
-
-| Task | Name | Live URL | Folder | Build log | Video |
-|---|---|---|---|---|---|
-| 01 | Apogee — NASA APOD archive | [alba-corp-assessment-orcin.vercel.app](https://alba-corp-assessment-orcin.vercel.app) | [`/01-web-app`](./01-web-app) | [BUILD_LOG](./01-web-app/BUILD_LOG.md) | _pending_ |
-| 02 | Forecourt — Dealership dashboard | _pending_ | [`/02-dashboard`](./02-dashboard) | _pending_ | _pending_ |
-| 03 | Forecourt Signal — n8n digest | _pending_ | [`/03-n8n-workflow`](./03-n8n-workflow) | _pending_ | _pending_ |
+Three tasks built for the Alba Corp engineering assessment.
 
 ---
 
-## Task 01 — Apogee
+## Task 01 — Creative, API-Integrated Web App
 
-NASA APOD plate archive. Travel to any date since 16 June 1995 and see the photograph of the universe from that day. Backend-for-frontend pattern: the API key lives on the server, never in the browser. Dual-TTL caching (1 year for historical plates, 15 min for today). Every view is a shareable URL.
-
-**Advanced options:** Your own backend · Shareable URL-synced state
-
----
-
-## Task 02 — Forecourt
-
-Dealership inventory and enquiry pipeline dashboard. Supabase Postgres with Row-Level Security (dealers see only their own data), server-computed analytics, real-time subscriptions, and signed-URL file storage for vehicle photos.
-
-**Advanced options:** Auth + RLS · Server-computed analytics · Real-time · File storage
+| Item | Link |
+|---|---|
+| Live URL | TBD |
+| Video | TBD |
+| Folder | [/01-web-app](./01-web-app) |
 
 ---
 
-## Task 03 — Forecourt Signal
+## Task 02 — Data Dashboard on a Backend Service
 
-Daily automotive market-intelligence digest built in n8n. Merges RSS feeds (Motor1, Car and Driver, Electrek) with NHTSA recall data, summarises with OpenAI gpt-4o-mini, deduplicates with a cyrb53 hash ledger in Google Sheets, and delivers a structured email.
+| Item | Link |
+|---|---|
+| Live URL | TBD |
+| Video | TBD |
+| Folder | [/02-dashboard](./02-dashboard) |
 
-**Advanced options:** LLM · Multi-source merge · Retry/backoff · Idempotency · Sub-workflow
+---
+
+## Task 03 — n8n Automation Workflow (Alba Market Pulse)
+
+| Item | Link |
+|---|---|
+| Live n8n instance | https://aamerkhan.app.n8n.cloud/workflow/4OpwLEDjlXPLQvi6 |
+| Video | TBD — add after recording |
+| Folder | [/03-n8n-workflow](./03-n8n-workflow) |
+
+**What it does:** Daily UAE automotive news digest — fetches 3 RSS feeds, scores by keyword relevance, summarises with Gemini, emails HTML digest at 07:00 GST. Logs every article to Google Sheets.
+
+---
+
+## Repo Layout
+
+```
+/01-web-app          Task 1
+/02-dashboard        Task 2
+/03-n8n-workflow     Task 3 (complete)
+README.md            this file
+```

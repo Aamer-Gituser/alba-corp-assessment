@@ -78,15 +78,15 @@ export function ArchiveStrip({ focalDate, initialPlates }: ArchiveStripProps) {
     <section className="mt-16">
       <SectionHeading />
 
-      <ul className="mt-6 grid grid-cols-2 gap-px border border-plate-edge bg-plate-edge sm:grid-cols-3 lg:grid-cols-4">
+      <ul className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
         {plates.map((plate) => (
-          <li key={plate.date} className="bg-plate-black">
+          <li key={plate.date} className="archive-item">
             <Link
               href={`/?date=${plate.date}`}
               scroll={false}
-              className="group block focus-visible:outline-offset-[-2px]"
+              className="group block focus-visible:outline-offset-[-2px] bg-plate-black/50 border border-plate-edge rounded-[3px] overflow-hidden cursor-pointer hover:border-cyanotype/35 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.8)] transition-all duration-300"
             >
-              <div className="relative aspect-square">
+              <div className="relative aspect-square overflow-hidden bg-plate-black group-hover:brightness-105 transition-all duration-300">
                 <PlateImage
                   src={posterImage(plate)}
                   alt={plate.title}
@@ -95,10 +95,10 @@ export function ArchiveStrip({ focalDate, initialPlates }: ArchiveStripProps) {
                 />
               </div>
               <div className="flex flex-col gap-1 p-3">
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-cyanotype">
+                <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-graphite">
                   {formatIndexDate(plate.date)} · {plateNumber(plate.date).toLocaleString("en-GB")}
                 </span>
-                <span className="line-clamp-2 font-display text-sm leading-snug text-emulsion/85 transition-colors group-hover:text-safelight">
+                <span className="line-clamp-2 font-display text-sm font-normal text-emulsion group-hover:text-safelight transition-colors duration-200">
                   {plate.title}
                 </span>
               </div>
@@ -123,7 +123,7 @@ export function ArchiveStrip({ focalDate, initialPlates }: ArchiveStripProps) {
             type="button"
             onClick={loadOlder}
             disabled={status === "loading"}
-            className="rounded-sm border border-plate-edge px-6 py-3 font-mono text-[11px] uppercase tracking-[0.2em] text-graphite transition-colors hover:border-safelight/50 hover:text-emulsion disabled:opacity-50"
+            className="rounded-[4px] px-8 py-2.5 bg-plate-slate/60 hover:bg-plate-slate border border-plate-edge hover:border-safelight/40 text-graphite hover:text-emulsion font-mono text-xs tracking-widest active:scale-98 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {status === "loading" ? "Retrieving…" : "Load earlier plates"}
           </button>
@@ -135,8 +135,11 @@ export function ArchiveStrip({ focalDate, initialPlates }: ArchiveStripProps) {
 
 function SectionHeading() {
   return (
-    <h2 className="font-mono text-[10px] uppercase tracking-[0.25em] text-graphite">
-      Preceding plates
-    </h2>
+    <div className="flex items-center gap-3">
+      <h2 className="font-mono text-xs uppercase tracking-widest text-graphite">
+        Preceding plates
+      </h2>
+      <div className="flex-1 h-px bg-gradient-to-r from-plate-edge to-plate-black" />
+    </div>
   );
 }

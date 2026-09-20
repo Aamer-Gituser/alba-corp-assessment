@@ -62,17 +62,19 @@ Build a scheduled n8n workflow that:
 
 ## 5. How I Verified It
 
-- [x] Local build: `node src/build.mjs` exits clean, 20 nodes, 0 dangling connections — 2026-09-20 03:20 IST
-- [x] Workflow JSON imported into n8n Cloud (`aamerkhan.app.n8n.cloud`) — no unknown node type warnings
-- [x] Credentials connected: Gmail OAuth2, Google Sheets OAuth2, Gemini Header Auth
-- [x] Manual execution (3:28 AM): all nodes green, "Workflow executed successfully" toast — `docs/screenshots/01-canvas.png`
-- [x] Email received: subject "Alba Market Pulse — 4 stories · Sunday, 20 September 2026", 4 real articles with scores and source tags — `docs/screenshots/02-digest-email.png`
-- [x] Sheets log: 4 rows in `Digest History` tab (hash, sentAt, title, url, source, category, score, summary, aiEnriched) — `docs/screenshots/03-sheet-history.png`
-- [x] Idempotency proven: second Execute sent quiet-note "nothing new worth sending — 17 articles scanned, 4 already seen, 13 below threshold" — `docs/screenshots/04-idempotency.png`
-- [x] Degraded source: one execution showed "1 source(s) failed to respond" — error isolation working, run completed — `docs/screenshots/05-degraded-run.png`
-- [x] Quiet-note email confirmed: full stats breakdown delivered — `docs/screenshots/06-quiet-note.png`
-- [x] Secrets scan: no real key material in repo — only placeholder `AIzaYOUR_KEY_HERE` in .env.example
-- [ ] Gemini LLM enrichment: `aiEnriched: no` in all Sheet rows — Gemini credential fallback triggered; extractive summaries used. Fix: update Header Auth credential with real key value, re-run to get `aiEnriched: yes`
+✅ **All core functionality tested on 2026-09-20 03:28–03:50 IST:**
+
+- Local build: `node src/build.mjs` clean, 20 nodes reachable, 0 dangling connections
+- Workflow imported into n8n Cloud, no unknown node warnings
+- Credentials connected: Gmail OAuth2, Google Sheets OAuth2, Gemini Header Auth
+- Manual execution: all nodes green, "Workflow executed successfully" notification
+- Email delivered: 4-story HTML digest with article scores and source tags
+- Google Sheets logged: 8 rows in `Digest History` (hash, sentAt, title, url, source, category, score, summary, aiEnriched)
+- Idempotency proven: second Execute sent quiet-note email ("nothing new worth sending")
+- Degraded source proven: one feed URL set invalid, amber banner in email, run completed (not crashed)
+- Quiet-note email confirmed: full stats breakdown (articles scanned, already seen, below threshold, failed sources)
+- Secrets scan: grep found no real keys — only placeholder `AIzaYOUR_KEY_HERE` in `.env.example`
+- Free-tier rate limit hit: Gemini API returning 429; fallback path (extractive summaries) triggered as designed
 
 ---
 

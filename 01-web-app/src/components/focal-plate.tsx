@@ -19,7 +19,7 @@ export function FocalPlate({ plate }: { plate: Apod }) {
   return (
     <article className="animate-rise">
       <header className="mb-6 flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.22em] text-cyanotype">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs uppercase tracking-[0.22em] text-safelight">
           <span>Plate {plateNumber(plate.date).toLocaleString("en-GB")}</span>
           <span className="text-plate-edge" aria-hidden>
             /
@@ -27,25 +27,24 @@ export function FocalPlate({ plate }: { plate: Apod }) {
           <time dateTime={plate.date}>{formatIndexDate(plate.date)}</time>
         </div>
 
-        <h1 className="font-display text-4xl leading-[1.05] text-emulsion sm:text-5xl lg:text-6xl">
+        <h1 className="font-display text-3xl leading-[1.05] text-emulsion sm:text-5xl lg:text-6xl font-normal tracking-tight">
           {plate.title}
         </h1>
 
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-graphite">
+        <p className="font-mono text-xs uppercase tracking-[0.15em] text-graphite">
           {formatLongDate(plate.date)}
           {plate.copyright && (
             <>
               <span className="mx-2 text-plate-edge" aria-hidden>
                 ·
               </span>
-              {/* NASA embeds newlines inside the credit field on many entries. */}
               {plate.copyright.replace(/\s+/g, " ").trim()}
             </>
           )}
         </p>
       </header>
 
-      <figure className="relative aspect-4/3 w-full border border-plate-edge sm:aspect-16/9">
+      <figure className="relative rounded-[4px] md:rounded-md border border-white/[0.08] shadow-[0_30px_100px_rgba(0,0,0,0.7)] overflow-hidden bg-plate-black aspect-4/3 w-full sm:aspect-16/9 group">
         <PlateImage
           src={poster}
           alt={plate.title}
@@ -56,11 +55,11 @@ export function FocalPlate({ plate }: { plate: Apod }) {
       </figure>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_260px]">
-        <p className="max-w-[68ch] text-[15px] leading-[1.8] text-emulsion/80">
+        <p className="max-w-[68ch] text-base leading-relaxed text-emulsion/85 font-light">
           {plate.explanation}
         </p>
 
-        <dl className="h-fit border border-plate-edge bg-plate-slate/40 p-5 font-mono text-[11px] uppercase tracking-[0.15em]">
+        <dl className="h-fit bg-plate-slate/60 backdrop-blur-md border border-plate-edge rounded-lg p-5 font-mono text-[11px] uppercase tracking-[0.15em]">
           <MetaRow label="Medium" value={isVideo ? "Video" : "Photograph"} />
           <MetaRow label="Filed" value={formatIndexDate(plate.date)} />
           <MetaRow label="Credit" value={plate.copyright ? "Attributed" : "Public domain"} />
@@ -69,7 +68,7 @@ export function FocalPlate({ plate }: { plate: Apod }) {
               href={plate.hdurl ?? plate.url}
               target="_blank"
               rel="noreferrer noopener"
-              className="text-safelight underline decoration-safelight/30 underline-offset-4 transition-colors hover:decoration-safelight"
+              className="text-xs text-safelight hover:text-amber-300 flex items-center gap-1 transition-colors duration-200"
             >
               {isVideo ? "Watch at source ↗" : "View full resolution ↗"}
             </a>
