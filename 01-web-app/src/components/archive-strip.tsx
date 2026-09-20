@@ -78,27 +78,45 @@ export function ArchiveStrip({ focalDate, initialPlates }: ArchiveStripProps) {
     <section className="mt-16">
       <SectionHeading />
 
-      <ul className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+      <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {plates.map((plate) => (
-          <li key={plate.date} className="archive-item card-3d-wrap">
+          <li key={plate.date} className="archive-item">
             <Link
               href={`/?date=${plate.date}`}
               scroll={false}
-              className="group block focus-visible:outline-offset-[-2px] bg-plate-black border border-white/[0.08] rounded-lg overflow-hidden cursor-pointer card-3d liquid-sheen transition-all duration-300"
+              className="group block focus-visible:outline-offset-[-2px] bg-[#080b14] border border-white/[0.07] rounded-2xl overflow-hidden cursor-pointer archive-card-3d transition-all duration-300"
             >
-              <div className="relative aspect-square overflow-hidden bg-plate-black">
-                <PlateImage
-                  src={posterImage(plate)}
-                  alt={plate.title}
-                  isVideo={plate.media_type !== "image"}
-                  sizes="(min-width: 1024px) 280px, (min-width: 640px) 33vw, 50vw"
-                />
+              <div className="relative aspect-square overflow-hidden bg-[#050810]">
+                {plate.media_type !== "image" ? (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-900/40 via-black to-black">
+                    <div className="relative w-16 h-16 flex items-center justify-center">
+                      <svg
+                        className="w-full h-full text-cyan-500/60"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                        <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" strokeWidth="1"/>
+                        <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                      </svg>
+                      <div className="absolute inset-0 rounded-full radar-pulse" style={{background: 'radial-gradient(circle, rgba(100,210,255,0.3) 0%, transparent 70%)' }} />
+                    </div>
+                    <span className="absolute top-3 right-3 text-[9px] font-mono tracking-widest text-cyan-400/60 uppercase">Video</span>
+                  </div>
+                ) : (
+                  <PlateImage
+                    src={posterImage(plate)}
+                    alt={plate.title}
+                    isVideo={false}
+                    sizes="(min-width: 1024px) 280px, (min-width: 640px) 33vw, 50vw"
+                  />
+                )}
               </div>
-              <div className="flex flex-col gap-1 p-3 bg-gradient-to-t from-black/60 via-black/30 to-transparent">
-                <span className="font-mono text-[11px] text-cosmic-cyan/90 tracking-widest">
+              <div className="flex flex-col gap-1.5 p-4 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
+                <span className="font-mono text-[10px] text-cyan-300/80 tracking-widest font-semibold">
                   {formatIndexDate(plate.date)} · {plateNumber(plate.date).toLocaleString("en-GB")}
                 </span>
-                <span className="line-clamp-2 font-display text-sm text-emulsion group-hover:text-safelight transition-colors duration-200">
+                <span className="line-clamp-2 font-serif text-sm text-white group-hover:text-cyan-200 transition-colors duration-200 leading-snug">
                   {plate.title}
                 </span>
               </div>
@@ -113,9 +131,9 @@ export function ArchiveStrip({ focalDate, initialPlates }: ArchiveStripProps) {
         </p>
       )}
 
-      <div className="mt-6 flex justify-center">
+      <div className="mt-10 flex justify-center">
         {status === "exhausted" ? (
-          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-graphite">
+          <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-zinc-600">
             End of the archive
           </p>
         ) : (
@@ -123,9 +141,9 @@ export function ArchiveStrip({ focalDate, initialPlates }: ArchiveStripProps) {
             type="button"
             onClick={loadOlder}
             disabled={status === "loading"}
-            className="rounded-lg px-6 py-2 bg-white/[0.04] border border-white/[0.12] hover:border-cosmic-cyan/40 text-emulsion/70 hover:text-emulsion font-mono text-xs tracking-wider active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
+            className="vision-btn px-6 py-2.5 rounded-full text-sm font-mono tracking-wider"
           >
-            {status === "loading" ? "Loading…" : "Load earlier plates"}
+            {status === "loading" ? "⏳ Loading…" : "Load earlier plates"}
           </button>
         )}
       </div>

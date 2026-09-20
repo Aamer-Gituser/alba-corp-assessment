@@ -1,4 +1,3 @@
-import { DateNavigator } from "@/components/date-navigator";
 import { FocalPlate } from "@/components/focal-plate";
 import { ArchiveStrip } from "@/components/archive-strip";
 import { ErrorNotice } from "@/components/notices";
@@ -36,15 +35,14 @@ export default async function ArchivePage({
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-[1120px] px-5 py-8 sm:px-8 sm:py-12">
-      <SiteHeader />
+    <div className="mx-auto w-full max-w-[1120px] px-5 py-8 sm:px-8 sm:py-12 pt-24">
+      <SiteHeader date={focalDate} />
 
-      <div className="my-8 flex flex-col gap-4 sm:my-10">
-        <p className="max-w-[46ch] text-sm leading-relaxed text-graphite">
+      <div className="mb-8">
+        <p className="max-w-[60ch] text-sm leading-relaxed text-zinc-400">
           Every day since 16 June 1995, NASA has published one photograph of the
           universe. Travel to a date and see the one from that day.
         </p>
-        <DateNavigator date={focalDate} />
       </div>
 
       {plateResult.ok ? (
