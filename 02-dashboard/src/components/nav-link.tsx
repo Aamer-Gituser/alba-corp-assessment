@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Gauge, Warehouse, BarChart3 } from 'lucide-react'
 
 const ICONS: Record<string, React.ElementType> = {
@@ -12,12 +12,17 @@ const ICONS: Record<string, React.ElementType> = {
 
 export function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
   const Icon = ICONS[href]
 
   return (
     <Link
       href={href}
+      prefetch
+      onMouseEnter={() => router.prefetch(href)}
+      onFocus={() => router.prefetch(href)}
+      onTouchStart={() => router.prefetch(href)}
       aria-current={active ? 'page' : undefined}
       className={`nav-pill ${active ? 'nav-pill-active' : ''}`}
       style={

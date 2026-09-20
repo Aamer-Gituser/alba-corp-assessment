@@ -28,11 +28,11 @@ export default function LoginPage() {
 
   return (
     <main
-      className="min-h-dvh lg:grid lg:grid-cols-[1.15fr_1fr]"
+      className="min-h-dvh lg:grid lg:grid-cols-[1.1fr_0.9fr]"
       style={{ background: 'var(--color-canvas)' }}
     >
       {/* ── Left: Hero ── */}
-      <section className="relative flex flex-col justify-between overflow-hidden px-8 py-12 sm:px-14 lg:py-16"
+      <section className="relative flex flex-col overflow-hidden px-8 py-12 sm:px-14 lg:grid lg:grid-rows-[auto_1fr] lg:py-16"
         style={{ background: 'linear-gradient(145deg,oklch(0.965 0.012 252),oklch(0.945 0.018 251))' }}
       >
         {/* Ambient blobs */}
@@ -51,7 +51,7 @@ export default function LoginPage() {
         </div>
 
         {/* Hero copy */}
-        <div className="relative z-10 max-w-[440px] py-16 lg:py-0">
+        <div className="relative z-10 max-w-[440px] py-16 lg:self-center lg:py-0 lg:-translate-y-[4vh]">
           <p className="mb-4 text-[10px] font-bold tracking-[0.2em] uppercase fade-up fade-up-1" style={{ color: 'var(--color-blue-text)', fontFamily: 'var(--font-display)' }}>
             Dealer Inventory &amp; Margin Engine
           </p>
@@ -86,7 +86,7 @@ export default function LoginPage() {
 
       {/* ── Right: Auth panel ── */}
       <section
-        className="slide-right flex items-center justify-center border-l px-6 py-14 sm:px-12"
+        className="slide-right flex items-center justify-center border-l px-6 py-14 sm:px-12 lg:px-16"
         style={{ borderColor: 'var(--color-rule)', background: 'oklch(1 0 0 / 55%)' }}
       >
         <div className="w-full max-w-[360px]">
