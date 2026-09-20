@@ -251,9 +251,8 @@ const mainNodes = [
     type: 'n8n-nodes-base.googleSheets',
     typeVersion: 4.5,
     position: [3100, 240],
-    onError: 'continueRegularOutput',
     notes:
-      'Human-auditable delivery log, and the persistent half of the idempotency story. Non-fatal: the email already went out.',
+      'Human-auditable delivery log, and the persistent half of the idempotency story. If this fails, the workflow stops and Error Trigger fires. Hashes are only committed after successful append.',
   },
   codeNode('Commit Seen Ledger', 'commit-seen-ledger', [3320, 240]),
   {

@@ -379,8 +379,7 @@
         3100,
         240
       ],
-      "onError": "continueRegularOutput",
-      "notes": "Human-auditable delivery log, and the persistent half of the idempotency story. Non-fatal: the email already went out."
+      "notes": "Human-auditable delivery log, and the persistent half of the idempotency story. If this fails, the workflow stops and Error Trigger fires. Hashes are only committed after successful append."
     },
     {
       "parameters": {
