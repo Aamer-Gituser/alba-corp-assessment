@@ -1,6 +1,6 @@
 # Forecourt — Used-Car Inventory & Margin Dashboard
 
-**Live URL:** *(add after Vercel deploy)*
+**Live URL:** [https://02-dashboard-fawn.vercel.app](https://02-dashboard-fawn.vercel.app)
 **Repo:** `02-dashboard/` folder in the monorepo
 
 ---

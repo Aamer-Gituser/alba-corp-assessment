@@ -84,3 +84,7 @@ npm run dev
 ```
 
 Demo credentials and full setup details are in [README.md](./README.md).
+
+## Final release verification
+
+On 20 September 2026, the final release check passed: `npm run lint`, `npx tsc --noEmit --incremental false`, `npm run build`, and `npm run verify:rls`. The production build rendered the Overview, Inventory, and Analytics routes without browser console errors. The RLS proof completed all ten expected isolation checks.
